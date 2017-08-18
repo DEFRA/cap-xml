@@ -10,8 +10,8 @@ let data
 lab.experiment('home', () => {
   lab.beforeEach((done) => {
     data = require('../config/cap.json')
-    // mock database put
-    database.put = (params, callback) => {
+    // mock database query
+    database.query = (params, callback) => {
       callback(null, params)
     }
     done()
@@ -19,13 +19,14 @@ lab.experiment('home', () => {
 
   lab.test('Correct data test', (done) => {
     processMessage(data, {}, (err, ret) => {
+      console.log(ret)
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.body.Item.id).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-      Code.expect(ret.body.Item.fwisCode).to.equal('064WAF33Hogsmill')
-      Code.expect(ret.body.Item.sent).to.equal('2017-05-28T11:00:02-00:00')
-      Code.expect(ret.body.Item.expires).to.equal('2017-05-29T11:00:02-00:00')
-      Code.expect(ret.body.Item.alert.status[0]).to.equal('Test')
+      Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+      Code.expect(ret.body.fwisCode).to.equal('064WAF33Hogsmill')
+      Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
+      Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
+      Code.expect(ret.body.status).to.equal('Test')
       done()
     })
   })
@@ -36,12 +37,12 @@ lab.experiment('home', () => {
     processMessage(data, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.body.Item.id).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-      Code.expect(ret.body.Item.fwisCode).to.equal('064WAF33Hogsmill')
-      Code.expect(ret.body.Item.sent).to.equal('2017-05-28T11:00:02-00:00')
-      Code.expect(ret.body.Item.expires).to.equal('2017-05-29T11:00:02-00:00')
-      Code.expect(ret.body.Item.alert.status[0]).to.not.equal('Test')
-      Code.expect(ret.body.Item.alert.status[0]).to.equal('Actual')
+      Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+      Code.expect(ret.body.fwisCode).to.equal('064WAF33Hogsmill')
+      Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
+      Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
+      Code.expect(ret.body.status).to.not.equal('Test')
+      Code.expect(ret.body.status).to.equal('Actual')
       done()
     })
   })
@@ -67,7 +68,7 @@ lab.experiment('home', () => {
   })
 
   lab.test('Database error', (done) => {
-    database.put = (params, callback) => {
+    database.query = (params, callback) => {
       callback(new Error('unit test error'))
     }
     processMessage(data, {}, (err, ret) => {

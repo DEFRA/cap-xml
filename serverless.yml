@@ -24,6 +24,12 @@ provider:
   region: ${env:TARGET_REGION}
   deploymentBucket:
     name: ${env:SLS_BUCKET}
+  vpc:
+    securityGroupIds:
+      - ${env:SLS_VPN_SECURITY_GROUP}
+    subnetIds:
+      - ${env:SLS_VPN_SUBNET_ID}
+
 
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
