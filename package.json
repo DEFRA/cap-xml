@@ -11,6 +11,7 @@
   "author": "The Environment Agency",
   "license": "OGL",
   "dependencies": {
+    "moment": "^2.18.1",
     "pg": "^7.1.2",
     "sql": "^0.78.0",
     "xml2js": "^0.4.17"
