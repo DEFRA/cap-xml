@@ -7,19 +7,31 @@ const processMessage = require('../lib/functions/processMessage').processMessage
 const database = require('../lib/helpers/database')
 let data
 
-lab.experiment('home', () => {
+lab.experiment('processMessage', () => {
   lab.beforeEach((done) => {
     data = require('../config/cap.json')
     // mock database query
     database.query = (params, callback) => {
       callback(null, params)
     }
+    database.queryVars = (params, vars, callback) => {
+      callback(null, {
+        rows: [{
+          id: '51',
+          identifier: '4eb3b7350ab7aa443650fc9351f2'
+        }]
+      })
+    }
     done()
   })
 
-  lab.test('Correct data test', (done) => {
+  lab.test('Correct data test with no previous alert on test', (done) => {
+    database.queryVars = (params, vars, callback) => {
+      callback(null, {
+        rows: []
+      })
+    }
     processMessage(data, {}, (err, ret) => {
-      console.log(ret)
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
       Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
@@ -31,9 +43,92 @@ lab.experiment('home', () => {
     })
   })
 
-  lab.test('Correct data test (Production)', (done) => {
+  lab.test('Correct data test with no previous alert on production', (done) => {
     const config = require('../config/config.json')
     config.aws.stage = 'ea'
+    processMessage(data, {}, (err, ret) => {
+      Code.expect(err).to.be.null()
+      Code.expect(ret.statusCode).to.equal(200)
+      Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+      Code.expect(ret.body.fwisCode).to.equal('064WAF33Hogsmill')
+      Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
+      Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
+      Code.expect(ret.body.status).to.not.equal('Test')
+      Code.expect(ret.body.status).to.equal('Actual')
+      done()
+    })
+  })
+
+  lab.test('Correct data test with active alert on test', (done) => {
+    const config = require('../config/config.json')
+    config.aws.stage = 'ea'
+    database.queryVars = (params, vars, callback) => {
+      callback(null, {
+        rows: [{
+          id: '51',
+          identifier: '4eb3b7350ab7aa443650fc9351f2'
+        }]
+      })
+    }
+    processMessage(data, {}, (err, ret) => {
+      Code.expect(err).to.be.null()
+      Code.expect(ret.statusCode).to.equal(200)
+      Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+      Code.expect(ret.body.fwisCode).to.equal('064WAF33Hogsmill')
+      Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
+      Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
+      Code.expect(ret.body.status).to.not.equal('Test')
+      Code.expect(ret.body.status).to.equal('Actual')
+      done()
+    })
+  })
+
+  lab.test('Correct data test with an active alert on production', (done) => {
+    const config = require('../config/config.json')
+    config.aws.stage = 'ea'
+    let tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    database.queryVars = (params, vars, callback) => {
+      callback(null, {
+        rows: [{
+          id: '51',
+          identifier: '4eb3b7350ab7aa443650fc9351f2',
+          sent: new Date(),
+          expires: tomorrow,
+          msgType: 'Alert'
+        }]
+      })
+    }
+    processMessage(data, {}, (err, ret) => {
+      Code.expect(err).to.be.null()
+      Code.expect(ret.statusCode).to.equal(200)
+      Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+      Code.expect(ret.body.fwisCode).to.equal('064WAF33Hogsmill')
+      Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
+      Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
+      Code.expect(ret.body.status).to.not.equal('Test')
+      Code.expect(ret.body.status).to.equal('Actual')
+      done()
+    })
+  })
+
+  lab.test('Correct data test with an active update on production', (done) => {
+    const config = require('../config/config.json')
+    config.aws.stage = 'ea'
+    let tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    database.queryVars = (params, vars, callback) => {
+      callback(null, {
+        rows: [{
+          id: '51',
+          identifier: '4eb3b7350ab7aa443650fc9351f2',
+          sent: new Date(),
+          expires: tomorrow,
+          references: 'test',
+          msgType: 'Update'
+        }]
+      })
+    }
     processMessage(data, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
@@ -69,6 +164,16 @@ lab.experiment('home', () => {
 
   lab.test('Database error', (done) => {
     database.query = (params, callback) => {
+      callback(new Error('unit test error'))
+    }
+    processMessage(data, {}, (err, ret) => {
+      Code.expect(err).to.be.an.error()
+      Code.expect(ret).to.be.undefined()
+      done()
+    })
+  })
+  lab.test('Database error 2', (done) => {
+    database.queryVars = (params, vars, callback) => {
       callback(new Error('unit test error'))
     }
     processMessage(data, {}, (err, ret) => {
