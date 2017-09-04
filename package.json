@@ -7,13 +7,15 @@
     "deploy": "sls deploy -v",
     "lint": "standard",
     "unit-test": "lab test -v -c --coverage-path lib -r console -o stdout -r html -o test/output.html -m 5000",
-    "test": "npm run lint && npm run unit-test"    
+    "test": "npm run lint && npm run unit-test"
   },
   "author": "The Environment Agency",
   "license": "OGL",
   "dependencies": {
     "moment": "^2.18.1",
     "pg": "^7.1.2",
+    "serverless": "^1.21.0",
+    "sls": "^0.1.0",
     "sql": "^0.78.0",
     "xml2js": "^0.4.17"
   },
