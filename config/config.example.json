@@ -1,0 +1,11 @@
+{
+  "aws": {
+   "accessKeyId": "",
+   "secretAccessKey": "",
+   "accountId": "",
+   "sessionToken": "",
+   "region": "",
+   "stage": "",
+   "rdsConnectionString": ""
+   }
+ }

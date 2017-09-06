@@ -4,14 +4,16 @@
   "description": "Serverless (AWS Lambda) project for CAP XML service",
   "main": "handler.js",
   "scripts": {
-    "deploy": "sls deploy -v",
+    "deploy": "npm run validate-config && sls deploy -v",
     "lint": "standard",
     "unit-test": "lab test -v -c --coverage-path lib -r console -o stdout -r html -o test/output.html -m 5000",
-    "test": "npm run lint && npm run unit-test"
+    "test": "npm run lint && npm run unit-test",
+    "validate-config": "node ./config/index.js"
   },
   "author": "The Environment Agency",
   "license": "OGL",
   "dependencies": {
+    "joi": "^10.6.0",
     "moment": "^2.18.1",
     "pg": "^7.1.2",
     "serverless": "^1.21.0",
