@@ -13,16 +13,14 @@
   "author": "The Environment Agency",
   "license": "OGL",
   "dependencies": {
-    "joi": "^10.6.0",
-    "moment": "^2.18.1",
-    "pg": "^7.1.2",
-    "serverless": "^1.21.0",
-    "sls": "^0.1.0",
-    "sql": "^0.78.0",
-    "xml2js": "^0.4.17"
+    "joi": "10.6.0",
+    "moment": "2.18.1",
+    "pg": "7.1.2",
+    "sql": "0.78.0",
+    "xml2js": "0.4.17"
   },
   "devDependencies": {
-    "code": "^4.1.0",
-    "lab": "^14.1.1"
+    "code": "4.1.0",
+    "lab": "14.1.1"
   }
 }
