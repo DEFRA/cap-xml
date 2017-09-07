@@ -5,11 +5,13 @@ const lab = exports.lab = Lab.script()
 const Code = require('code')
 const processMessage = require('../lib/functions/processMessage').processMessage
 const database = require('../lib/helpers/database')
-let data
+let capAlert
+let capUpdate
 
 lab.experiment('processMessage', () => {
   lab.beforeEach((done) => {
-    data = require('../config/cap.json')
+    capAlert = require('./data/capAlert.json')
+    capUpdate = require('./data/capUpdate.json')
     // mock database query
     database.query = (params, callback) => {
       callback(null, params)
@@ -31,7 +33,7 @@ lab.experiment('processMessage', () => {
         rows: []
       })
     }
-    processMessage(data, {}, (err, ret) => {
+    processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
       Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
@@ -46,7 +48,7 @@ lab.experiment('processMessage', () => {
   lab.test('Correct data test with no previous alert on production', (done) => {
     const config = require('../config/config.json')
     config.aws.stage = 'ea'
-    processMessage(data, {}, (err, ret) => {
+    processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
       Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
@@ -70,7 +72,7 @@ lab.experiment('processMessage', () => {
         }]
       })
     }
-    processMessage(data, {}, (err, ret) => {
+    processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
       Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
@@ -83,7 +85,7 @@ lab.experiment('processMessage', () => {
     })
   })
 
-  lab.test('Correct data test with an active alert on production', (done) => {
+  lab.test('Correct alert data test with an active on production', (done) => {
     const config = require('../config/config.json')
     config.aws.stage = 'ea'
     let tomorrow = new Date()
@@ -99,7 +101,7 @@ lab.experiment('processMessage', () => {
         }]
       })
     }
-    processMessage(data, {}, (err, ret) => {
+    processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
       Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
@@ -112,7 +114,7 @@ lab.experiment('processMessage', () => {
     })
   })
 
-  lab.test('Correct data test with an active update on production', (done) => {
+  lab.test('Correct update data test with an active on production', (done) => {
     const config = require('../config/config.json')
     config.aws.stage = 'ea'
     let tomorrow = new Date()
@@ -125,11 +127,12 @@ lab.experiment('processMessage', () => {
           sent: new Date(),
           expires: tomorrow,
           references: 'test',
-          msgType: 'Update'
+          msgType: 'Alert'
         }]
       })
     }
-    processMessage(data, {}, (err, ret) => {
+
+    processMessage(capUpdate, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
       Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
@@ -144,8 +147,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Bad data test', (done) => {
     // set data to primitive data type
-    data = -1
-    processMessage(data, {}, (err, ret) => {
+    processMessage(1, {}, (err, ret) => {
       Code.expect(err).to.be.an.error()
       Code.expect(ret).to.be.undefined()
       done()
@@ -154,8 +156,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Bad data test 2', (done) => {
     // set data to bad xml
-    data.bodyXml = '<xml>test</xml'
-    processMessage(data, {}, (err, ret) => {
+    processMessage('<xml>test</xml', {}, (err, ret) => {
       Code.expect(err).to.be.an.error()
       Code.expect(ret).to.be.undefined()
       done()
@@ -166,7 +167,7 @@ lab.experiment('processMessage', () => {
     database.query = (params, callback) => {
       callback(new Error('unit test error'))
     }
-    processMessage(data, {}, (err, ret) => {
+    processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.an.error()
       Code.expect(ret).to.be.undefined()
       done()
@@ -176,7 +177,7 @@ lab.experiment('processMessage', () => {
     database.queryVars = (params, vars, callback) => {
       callback(new Error('unit test error'))
     }
-    processMessage(data, {}, (err, ret) => {
+    processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.an.error()
       Code.expect(ret).to.be.undefined()
       done()

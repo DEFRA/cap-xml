@@ -5,11 +5,11 @@ const lab = exports.lab = Lab.script()
 const Code = require('code')
 const getMessages = require('../lib/functions/getMessages').getMessages
 const database = require('../lib/helpers/database')
-let data
+let capAlert
 
 lab.experiment('getMessages', () => {
   lab.beforeEach((done) => {
-    data = require('../config/cap.json')
+    capAlert = require('./data/capAlert.json')
     // mock database query
     database.query = (params, callback) => {
       callback(null, {
@@ -22,7 +22,7 @@ lab.experiment('getMessages', () => {
   })
 
   lab.test('Correct data test', (done) => {
-    getMessages(data, {}, (err, ret) => {
+    getMessages(capAlert, {}, (err, ret) => {
       console.log(ret)
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
