@@ -22,5 +22,10 @@ package:
 functions:
   processMessage:
     handler: lib/functions/processMessage.processMessage
+  getMessagesAtom:
+    handler: lib/functions/getMessagesAtom.getMessagesAtom
   getMessages:
     handler: lib/functions/getMessages.getMessages
+  getMessage:
+    handler: lib/functions/getMessage.getMessage
+  

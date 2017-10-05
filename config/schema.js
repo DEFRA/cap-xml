@@ -11,5 +11,6 @@ module.exports = Joi.object().required().keys({
     region: Joi.string().required(),
     stage: Joi.string().required().allow('dv', 'qa', 'pp', 'ea'),
     rdsConnectionString: Joi.string().required()
-  })
+  }),
+  url: Joi.string().uri().required()
 })
