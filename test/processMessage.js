@@ -156,7 +156,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Bad data test 2', (done) => {
     // set data to bad xml
-    processMessage('<xml>test</xml', {}, (err, ret) => {
+    processMessage({bodyXml: '$%^&*'}, {}, (err, ret) => {
       Code.expect(err).to.be.an.error()
       Code.expect(ret).to.be.undefined()
       done()

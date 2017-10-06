@@ -58,4 +58,21 @@ lab.experiment('getMessage', () => {
       done()
     })
   })
+
+  lab.test('event validation test', (done) => {
+    event.id = {}
+    getMessage(event, {}, (err, ret) => {
+      Code.expect(err).to.be.an.error()
+      Code.expect(ret).to.be.undefined()
+      done()
+    })
+  })
+  lab.test('event validation test 2', (done) => {
+    event = {}
+    getMessage(event, {}, (err, ret) => {
+      Code.expect(err).to.be.an.error()
+      Code.expect(ret).to.be.undefined()
+      done()
+    })
+  })
 })
