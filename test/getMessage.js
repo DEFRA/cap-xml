@@ -42,9 +42,8 @@ lab.experiment('getMessage', () => {
       })
     }
     getMessage(event, {}, (err, ret) => {
-      Code.expect(err).to.be.an.error()
-      Code.expect(err).to.equal(new Error('No message found'))
-      Code.expect(ret).to.be.undefined()
+      Code.expect(err).to.be.null()
+      Code.expect(ret.body).to.be.undefined()
       done()
     })
   })
