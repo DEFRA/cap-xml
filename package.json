@@ -23,6 +23,7 @@
   "devDependencies": {
     "code": "4.1.0",
     "lab": "14.1.1",
-    "serverless": "1.21.1"
+    "serverless": "1.21.1",
+    "standard": "10.0.3"
   }
 }
