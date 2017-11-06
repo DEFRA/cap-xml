@@ -4,7 +4,7 @@
   "description": "Serverless (AWS Lambda) project for CAP XML service",
   "main": "handler.js",
   "scripts": {
-    "deploy": "npm run validate-config && sls deploy -v",
+    "deploy": "npm run validate-config && sls deploy -v --force",
     "lint": "standard",
     "unit-test": "lab test -v -c --coverage-path lib -r console -o stdout -r html -o test/output.html -m 5000",
     "test": "npm run lint && npm run unit-test",
