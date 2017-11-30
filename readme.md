@@ -60,7 +60,7 @@ eg: `{
 
 ## Deployment
 
-`serverless deploy -v`
+`npm run deploy`
 
 ## Contributing to this project
 
