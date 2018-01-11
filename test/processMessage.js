@@ -91,7 +91,6 @@ lab.experiment('processMessage', () => {
     }
     database.query = (params, callback) => {
       // Check that reference field is blank
-      console.log(params)
       Code.expect(params.values[2]).to.not.be.empty()
       Code.expect(params.values[2]).to.contain(yesterday.toISOString().substring(0, yesterday.toISOString().length - 5))
       Code.expect(params.values[1]).to.equal('Update')
