@@ -8,6 +8,9 @@ const database = require('../lib/helpers/database')
 let capAlert
 let capUpdate
 
+const tomorrow = new Date(new Date().getTime() + (24 * 60 * 60 * 1000))
+const yesterday = new Date(new Date().getTime() - (24 * 60 * 60 * 1000))
+
 lab.experiment('processMessage', () => {
   lab.beforeEach((done) => {
     capAlert = require('./data/capAlert.json')
@@ -33,6 +36,12 @@ lab.experiment('processMessage', () => {
         rows: []
       })
     }
+    database.query = (params, callback) => {
+      // Check that reference field is blank
+      Code.expect(params.values[2]).to.be.empty()
+      Code.expect(params.values[1]).to.equal('Alert')
+      callback(null, params)
+    }
     processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
@@ -48,6 +57,12 @@ lab.experiment('processMessage', () => {
   lab.test('Correct data test with no previous alert on production', (done) => {
     const config = require('../config/config.json')
     config.aws.stage = 'ea'
+    database.query = (params, callback) => {
+      // Check that reference field is blank
+      Code.expect(params.values[2]).to.be.empty()
+      Code.expect(params.values[1]).to.equal('Alert')
+      callback(null, params)
+    }
     processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.null()
       Code.expect(ret.statusCode).to.equal(200)
@@ -68,9 +83,18 @@ lab.experiment('processMessage', () => {
       callback(null, {
         rows: [{
           id: '51',
-          identifier: '4eb3b7350ab7aa443650fc9351f2'
+          identifier: '4eb3b7350ab7aa443650fc9351f2',
+          expires: tomorrow,
+          sent: yesterday
         }]
       })
+    }
+    database.query = (params, callback) => {
+      // Check that reference field is blank
+      Code.expect(params.values[2]).to.not.be.empty()
+      Code.expect(params.values[2]).to.contain(yesterday.toISOString().substring(0, yesterday.toISOString().length - 5))
+      Code.expect(params.values[1]).to.equal('Update')
+      callback(null, params)
     }
     processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.null()
@@ -88,18 +112,23 @@ lab.experiment('processMessage', () => {
   lab.test('Correct alert data test with an active on production', (done) => {
     const config = require('../config/config.json')
     config.aws.stage = 'ea'
-    let tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
     database.queryVars = (params, vars, callback) => {
       callback(null, {
         rows: [{
           id: '51',
           identifier: '4eb3b7350ab7aa443650fc9351f2',
-          sent: new Date(),
+          sent: yesterday,
           expires: tomorrow,
           msgType: 'Alert'
         }]
       })
+    }
+    database.query = (params, callback) => {
+      // Check that reference field is blank
+      Code.expect(params.values[2]).to.not.be.empty()
+      Code.expect(params.values[1]).to.equal('Update')
+      Code.expect(params.values[2]).to.contain(yesterday.toISOString().substring(0, yesterday.toISOString().length - 5))
+      callback(null, params)
     }
     processMessage(capAlert, {}, (err, ret) => {
       Code.expect(err).to.be.null()
@@ -117,19 +146,24 @@ lab.experiment('processMessage', () => {
   lab.test('Correct update data test with an active on production', (done) => {
     const config = require('../config/config.json')
     config.aws.stage = 'ea'
-    let tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
     database.queryVars = (params, vars, callback) => {
       callback(null, {
         rows: [{
           id: '51',
           identifier: '4eb3b7350ab7aa443650fc9351f2',
-          sent: new Date(),
+          sent: yesterday,
           expires: tomorrow,
-          references: 'test',
           msgType: 'Alert'
         }]
       })
+    }
+
+    database.query = (params, callback) => {
+      // Check that reference field is blank
+      Code.expect(params.values[2]).to.not.be.empty()
+      Code.expect(params.values[1]).to.equal('Update')
+      Code.expect(params.values[2]).to.contain(yesterday.toISOString().substring(0, yesterday.toISOString().length - 5))
+      callback(null, params)
     }
 
     processMessage(capUpdate, {}, (err, ret) => {
