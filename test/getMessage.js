@@ -19,7 +19,9 @@ lab.experiment('getMessage', () => {
       return new Promise((resolve, reject) => {
         resolve({
           rows: [{
-            alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>'
+            getmessage: {
+              alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>'
+            }
           }]
         })
       })

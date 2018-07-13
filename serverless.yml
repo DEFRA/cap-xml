@@ -22,8 +22,13 @@ package:
 functions:
   processMessage:
     handler: lib/functions/processMessage.processMessage
+    timeout: 30
   getMessagesAtom:
     handler: lib/functions/getMessagesAtom.getMessagesAtom
+    timeout: 60
   getMessage:
     handler: lib/functions/getMessage.getMessage
-  
+    timeout: 12
+  archiveMessages:
+    handler: lib/functions/archiveMessages.archiveMessages
+    timeout: 240
