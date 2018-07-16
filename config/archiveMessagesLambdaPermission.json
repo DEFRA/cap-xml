@@ -1,0 +1,7 @@
+{
+  "FunctionName": "cap-xml-{stage}-archiveMessages",
+  "StatementId": "events-invoke-cap-xml-{stage}-archiveMessage",
+  "Action": "lambda:InvokeFunction",
+  "Principal": "events.amazonaws.com",
+  "SourceArn": "{ruleArn}"
+}
