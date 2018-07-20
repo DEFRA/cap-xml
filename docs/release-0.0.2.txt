@@ -1,0 +1,74 @@
+# CAP-XML release 0.0.2 Thursday 27th July 2018
+
+# Tickets
+FLO-2930 Update Lambda to node 8
+FLO-3040 Performance enhancements
+
+# Special Instructions
+# Node
+Version of node installed on jenkins box needs bumping to version of node 8 to match that of Lambda to enable correct package installation prior to deployment
+
+# Jenkins
+Changes have been made to CX_{stage}_DEPLOY_LAMBDA:
+
+```
+#!/bin/bash
+
+#copy config to cap-xml
+cp ${WORKSPACE}/cap-xml-config/cap-xml/production/config.json ${WORKSPACE}/cap-xml/config/config.json
+
+#npm install
+cd ${WORKSPACE}/cap-xml
+npm i
+
+#deploy
+npm run deploy
+
+
+############################################################
+#create cloudwatch event and add trigger for archiveMessages
+
+  #get lambda role
+  CX_ROLE=`aws lambda get-function --output json --function-name cap-xml-${TARGET_ENV_NAME}-archiveMessages --region ${TARGET_REGION} | sed -n 's/.*"Role": "\(.*\)",/\1/p' | sed 's/ //g'`
+  
+  #setup rule config
+  sed -e s^{roleArn}^$CX_ROLE^g config/archiveMessagesEventRule.json | sed -e s/{stage}/${TARGET_ENV_NAME}/g > config/archiveMessagesEventRule_update.json
+  
+  #put rule
+  aws events put-rule --cli-input-json file://config/archiveMessagesEventRule_update.json --region ${TARGET_REGION}
+  
+  #get lambda function ARN
+  CX_ARN=`aws lambda get-function --output json --function-name cap-xml-${TARGET_ENV_NAME}-archiveMessages --region ${TARGET_REGION} | sed -n 's/.*"FunctionArn": "\(.*\)",/\1/p' | sed 's/ //g'`
+  
+  #setup target config
+  sed -e s^{lambdaArn}^$CX_ARN^g config/archiveMessagesTarget.json | sed -e s/{stage}/${TARGET_ENV_NAME}/g > config/archiveMessagesTarget_update.json
+  
+  #put lambda target against rule
+  aws events put-targets --cli-input-json file://config/archiveMessagesTarget_update.json --region ${TARGET_REGION}
+  
+  #Get rule ARN
+  RULE_ARN=`aws events describe-rule --output json --region ${TARGET_REGION} --name cap-xml-${TARGET_ENV_NAME}-archiveMessages-rule | sed -n 's/.*"Arn": "\(.*\)",/\1/p' | sed 's/ //g'`
+  
+  # If not exists then create permission
+  if [[ `aws lambda get-policy --function-name cap-xml-${TARGET_ENV_NAME}-archiveMessages --region ${TARGET_REGION}` = *"events-invoke-cap-xml-${TARGET_ENV_NAME}-archiveMessages"* ]]
+  then
+      echo "events-invoke-cap-xml-${TARGET_ENV_NAME}-archiveMessages lambda permission already exists"
+  else
+      #setup permission json file
+      sed -e s^{ruleArn}^$RULE_ARN^g config/archiveMessagesLambdaPermission.json | sed -e s/{stage}/${TARGET_ENV_NAME}/g > config/archiveMessagesLambdaPermission_update.json
+  
+      #add lambda permission for rule
+      aws lambda add-permission --cli-input-json file://config/archiveMessagesLambdaPermission_update.json --region ${TARGET_REGION}
+  fi
+
+############################################################
+
+```
+
+#Build instructions
+
+A full pipeline build needs to run.
+
+CX_{stage}_01_UPDATE_DATABASE
+CX_{stage}_02_DEPLOY_LAMBDA
+CX_{stage}_03_TESTS
