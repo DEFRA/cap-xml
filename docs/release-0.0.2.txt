@@ -8,6 +8,9 @@ FLO-3040 Performance enhancements
 # Node
 Version of node installed on jenkins box needs bumping to version of node 8 to match that of Lambda to enable correct package installation prior to deployment
 
+# AWS
+All settings and permissions added to Dev/QA/PP need promoting to production
+
 # Jenkins
 Changes have been made to CX_{stage}_DEPLOY_LAMBDA:
 
