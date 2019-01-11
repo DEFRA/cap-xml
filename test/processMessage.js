@@ -293,4 +293,41 @@ lab.experiment('processMessage', () => {
       Code.expect(err).to.be.an.error()
     }
   })
+
+  lab.test('Correct data test for processMessage where previous message is active and has reference', async () => {
+    const config = require('../config/config.json')
+    config.aws.stage = 'ea'
+
+    service.getLastMessage = (id) => {
+      return new Promise((resolve, reject) => {
+        resolve({
+          rows: [{
+            id: '51',
+            identifier: '4eb3b7350ab7aa443650fc9351f2',
+            expires: tomorrow,
+            sent: yesterday,
+            references: 'Previous_Active_Message'
+          }]
+        })
+      })
+    }
+
+    service.putMessage = (query) => {
+      return new Promise((resolve, reject) => {
+        Code.expect(query.values[2]).to.not.be.empty()
+        Code.expect(query.values[1]).to.equal('Update')
+        Code.expect(query.values[2]).to.contain('Previous_Active_Message www.gov.uk/environment-agency')
+        resolve()
+      })
+    }
+
+    const ret = await processMessage(capAlert)
+    Code.expect(ret.statusCode).to.equal(200)
+    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
+    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
+    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
+    Code.expect(ret.body.status).to.not.equal('Test')
+    Code.expect(ret.body.status).to.equal('Actual')
+  })
 })
