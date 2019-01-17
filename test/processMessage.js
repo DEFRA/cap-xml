@@ -5,6 +5,7 @@ const lab = exports.lab = Lab.script()
 const Code = require('code')
 const processMessage = require('../lib/functions/processMessage').processMessage
 const service = require('../lib/helpers/service')
+const moment = require('moment')
 let capAlert
 let capUpdate
 
@@ -314,9 +315,11 @@ lab.experiment('processMessage', () => {
 
     service.putMessage = (query) => {
       return new Promise((resolve, reject) => {
+        const lastDate = moment(yesterday).utc().format('YYYY-MM-DDTHH:mm:ssZ')
         Code.expect(query.values[2]).to.not.be.empty()
         Code.expect(query.values[1]).to.equal('Update')
-        Code.expect(query.values[2]).to.contain('Previous_Active_Message www.gov.uk/environment-agency')
+        Code.expect(query.values[2]).to.contain(`Previous_Active_Message www.gov.uk/environment-agency,4eb3b7350ab7aa443650fc9351f2,${lastDate}`)
+        Code.expect(query.values[2]).to.not.contain('00:00+00:00')
         resolve()
       })
     }
