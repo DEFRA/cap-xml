@@ -1,0 +1,8 @@
+# CAP-XML release 0.0.4 20190124
+
+## Tickets
+FLO-3290 - CAP XML <references> tag changes
+
+## Special instructions
+
+Full database + code release needs to be performed.
