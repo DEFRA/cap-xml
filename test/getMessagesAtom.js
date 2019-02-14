@@ -58,11 +58,7 @@ lab.experiment('getMessagesAtom', () => {
         reject(new Error('test error'))
       })
     }
-    try {
-      await getMessagesAtom({})
-    } catch (err) {
-      Code.expect(err).to.be.an.error()
-      Code.expect(err.message).to.equal('test error')
-    }
+    const err = await Code.expect(getMessagesAtom({})).to.reject()
+    Code.expect(err.message).to.equal('test error')
   })
 })

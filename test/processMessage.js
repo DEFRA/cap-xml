@@ -251,21 +251,11 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Bad data test', async () => {
-    try {
-    // set data to primitive data type
-      await processMessage(1)
-    } catch (err) {
-      Code.expect(err).to.be.an.error()
-    }
+    await Code.expect(processMessage(1)).to.reject()
   })
 
   lab.test('Bad data test 2', async () => {
-    try {
-      // set data to bad xml
-      await processMessage({bodyXml: '$%^&*'})
-    } catch (err) {
-      Code.expect(err).to.be.an.error()
-    }
+    await Code.expect(processMessage({bodyXml: '$%^&*'})).to.reject()
   })
 
   lab.test('Database error', async () => {
@@ -274,12 +264,9 @@ lab.experiment('processMessage', () => {
         reject(new Error('unit test error'))
       })
     }
-    try {
-      await processMessage(capAlert)
-    } catch (err) {
-      Code.expect(err).to.be.an.error()
-    }
-  })
+    const err = await Code.expect(processMessage(capAlert)).to.reject()
+    Code.expect(err.message).to.equal('unit test error')
+   })
 
   lab.test('Database error 2', async () => {
     service.getLastMessage = (id) => {
@@ -287,12 +274,8 @@ lab.experiment('processMessage', () => {
         reject(new Error('unit test error'))
       })
     }
-
-    try {
-      await processMessage(capAlert)
-    } catch (err) {
-      Code.expect(err).to.be.an.error()
-    }
+    const err = await Code.expect(processMessage(capAlert)).to.reject()
+    Code.expect(err.message).to.equal('unit test error')
   })
 
   lab.test('Correct data test for processMessage where previous message is active and has reference', async () => {
