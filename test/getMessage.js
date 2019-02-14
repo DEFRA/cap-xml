@@ -43,12 +43,8 @@ lab.experiment('getMessage', () => {
         })
       })
     }
-    try {
-      await getMessage(event)
-      Code.expect(true).to.equal(false)
-    } catch (err) {
-      Code.expect(err.message).to.equal('No message found')
-    }
+    const err = await Code.expect(getMessage(event)).to.reject()
+    Code.expect(err.message).to.equal('No message found')
   })
 
   lab.test('Incorrect database rows object', async () => {
@@ -59,12 +55,8 @@ lab.experiment('getMessage', () => {
         })
       })
     }
-    try {
-      await getMessage(event)
-      Code.expect(true).to.equal(false)
-    } catch (err) {
-      Code.expect(err.message).to.equal('No message found')
-    }
+    const err = await Code.expect(getMessage(event)).to.reject()
+    Code.expect(err.message).to.equal('No message found')
   })
 
   lab.test('Incorrect database rows object', async () => {
@@ -73,12 +65,8 @@ lab.experiment('getMessage', () => {
         resolve({})
       })
     }
-    try {
-      await getMessage(event)
-      Code.expect(true).to.equal(false)
-    } catch (err) {
-      Code.expect(err.message).to.equal('No message found')
-    }
+    const err = await Code.expect(getMessage(event)).to.reject()
+    Code.expect(err.message).to.equal('No message found')
   })
 
   lab.test('No database return', async () => {
@@ -87,12 +75,8 @@ lab.experiment('getMessage', () => {
         resolve()
       })
     }
-    try {
-      await getMessage(event)
-      Code.expect(true).to.equal(false)
-    } catch (err) {
-      Code.expect(err.message).to.equal('No message found')
-    }
+    const err = await Code.expect(getMessage(event)).to.reject()
+    Code.expect(err.message).to.equal('No message found')
   })
 
   lab.test('Error test', async () => {
@@ -101,31 +85,17 @@ lab.experiment('getMessage', () => {
         reject(new Error('test error'))
       })
     }
-    try {
-      await getMessage(event)
-      Code.expect(true).to.equal(false)
-    } catch (err) {
-      Code.expect(err.message).to.equal('test error')
-    }
+    const err = await Code.expect(getMessage(event)).to.reject()
+    Code.expect(err.message).to.equal('test error')
   })
 
   lab.test('event validation test', async () => {
     event.id = {}
-    try {
-      await getMessage(event)
-      Code.expect(true).to.equal(false)
-    } catch (err) {
-      Code.expect(err).to.be.an.error()
-    }
+    await Code.expect(getMessage(event)).to.reject()
   })
 
   lab.test('event validation test 2', async () => {
     event = {}
-    try {
-      await getMessage(event)
-      Code.expect(true).to.equal(false)
-    } catch (err) {
-      Code.expect(err).to.be.an.error()
-    }
+    await Code.expect(getMessage(event)).to.reject()
   })
 })
