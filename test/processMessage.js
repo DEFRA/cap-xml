@@ -255,7 +255,7 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Bad data test 2', async () => {
-    await Code.expect(processMessage({bodyXml: '$%^&*'})).to.reject()
+    await Code.expect(processMessage({ bodyXml: '$%^&*' })).to.reject()
   })
 
   lab.test('Database error', async () => {
@@ -266,7 +266,7 @@ lab.experiment('processMessage', () => {
     }
     const err = await Code.expect(processMessage(capAlert)).to.reject()
     Code.expect(err.message).to.equal('unit test error')
-   })
+  })
 
   lab.test('Database error 2', async () => {
     service.getLastMessage = (id) => {

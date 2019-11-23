@@ -4,7 +4,7 @@ service: cap-xml
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
   role: ${env:SLS_LAMBA_ROLE}
   stage: ${env:TARGET_ENV_NAME}
   region: ${env:TARGET_REGION}

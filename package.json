@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "code": "5.2.0",
+    "codeclimate-test-reporter": "0.5.1",
     "lab": "15.4.5",
     "serverless": "1.27.2",
     "standard": "11.0.1"

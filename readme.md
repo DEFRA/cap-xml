@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/DEFRA/cap-xml.svg?branch=master)](https://travis-ci.org/DEFRA/cap-xml)[![Maintainability](https://api.codeclimate.com/v1/badges/e6e726f97cd31b8569fa/maintainability)](https://codeclimate.com/github/DEFRA/cap-xml/maintainability)[![Test Coverage](https://api.codeclimate.com/v1/badges/e6e726f97cd31b8569fa/test_coverage)](https://codeclimate.com/github/DEFRA/cap-xml/test_coverage)
+
 # CAP-XML Services
 
 ## Synopsis
