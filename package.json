@@ -1,15 +1,15 @@
 {
   "name": "cap-xml",
-  "version": "0.0.4",
+  "version": "1.0.0",
   "description": "Serverless (AWS Lambda) project for CAP XML service",
   "engines": {
-    "node": ">8"
+    "node": ">12"
   },
   "main": "handler.js",
   "scripts": {
     "deploy": "npm run validate-config && sls deploy -v --force",
     "lint": "standard",
-    "unit-test": "lab test -v -c --coverage-exclude lib/helpers -r console -o stdout -r html -o test/output.html -m 5000",
+    "unit-test": "lab test -v -c --coverage-exclude lib/helpers -r console -o stdout -r lcov -o lcov.info -m 5000",
     "test": "npm run lint && npm run unit-test",
     "validate-config": "node ./config/index.js"
   },
@@ -24,6 +24,8 @@
     "xml2js": "0.4.19"
   },
   "devDependencies": {
+    "@hapi/code": "^7.0.0",
+    "@hapi/lab": "^21.0.0",
     "code": "5.2.0",
     "codeclimate-test-reporter": "0.5.1",
     "lab": "15.4.5",
