@@ -16,20 +16,18 @@
   "author": "The Environment Agency",
   "license": "OGL",
   "dependencies": {
-    "feed": "1.1.1",
-    "joi": "13.3.0",
-    "moment": "2.22.1",
-    "pg": "7.4.3",
+    "@hapi/joi": "^16.1.7",
+    "feed": "4.0.0",
+    "moment": "2.24.0",
+    "pg": "7.14.0",
     "sql": "0.78.0",
-    "xml2js": "0.4.19"
+    "xml2js": "0.4.22"
   },
   "devDependencies": {
     "@hapi/code": "^7.0.0",
     "@hapi/lab": "^21.0.0",
-    "code": "5.2.0",
     "codeclimate-test-reporter": "0.5.1",
-    "lab": "15.4.5",
-    "serverless": "1.27.2",
-    "standard": "11.0.1"
+    "serverless": "1.58.0",
+    "standard": "14.3.1"
   }
 }

@@ -1,8 +1,8 @@
 'use strict'
 
-const Lab = require('lab')
+const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
-const Code = require('code')
+const Code = require('@hapi/code')
 const getMessagesAtom = require('../lib/functions/getMessagesAtom').getMessagesAtom
 const service = require('../lib/helpers/service')
 
@@ -13,6 +13,7 @@ lab.experiment('getMessagesAtom', () => {
       return new Promise((resolve, reject) => {
         resolve({
           rows: [{
+            fwis_code: 'test_fwis_code',
             alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>',
             sent: new Date(),
             identifier: '4eb3b7350ab7aa443650fc9351f'

@@ -1,8 +1,8 @@
 'use strict'
 
-const Joi = require('joi')
+const Joi = require('@hapi/joi')
 
-module.exports = Joi.object().required().keys({
+module.exports = Joi.object({
   aws: Joi.object().required().keys({
     accessKeyId: Joi.string().required(),
     secretAccessKey: Joi.string().required(),

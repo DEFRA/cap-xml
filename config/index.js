@@ -1,10 +1,8 @@
 'use strict'
 
-const Joi = require('joi')
-
 const schema = require('./schema')
 const config = require('./config.json')
 
-const { error } = Joi.validate(config, schema)
-if (error) throw error
+const { error } = schema.validate(config)
+if (error) throw new Error(error)
 console.log('Config.json validated')
