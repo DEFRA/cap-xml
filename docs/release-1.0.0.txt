@@ -1,0 +1,26 @@
+# CAP-XML release 1.0.0
+
+This is to update the application to node v12 + update dependencies
+
+# Ticket
+FLO-417
+
+# Instructions
+
+Update jenkins slave to use nvm
+
+Update CX_{stage}_02_DEPLOY_LAMBDA
+
+to include
+
+**************************
+
+#!/bin/bash
+
+. /var/lib/jenkins/.bashrc && nvm install v12
+
+*****************************
+
+at the start of the execute shell script.
+
+Run the build and the auto tests.
