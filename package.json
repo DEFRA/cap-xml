@@ -1,6 +1,6 @@
 {
   "name": "cap-xml",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Serverless (AWS Lambda) project for CAP XML service",
   "engines": {
     "node": ">12"
