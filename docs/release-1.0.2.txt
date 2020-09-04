@@ -2,13 +2,14 @@
 
 Ticket: FIS-691
 
-# Release is to update a column data type in messages_archive table to allow data to archive correctly.
+Release is to update a column data type in messages_archive table to allow data to archive correctly.
 
 # Instructions
 
-Perform a database update:
+Perform a full system:
 
 Execute: CX_{stage}_01_UPDATE_DATABASE
+Execute: CX_{stage}_02_DEPLOY_LAMBDA
 
 Note that development environment took 12 minutes and test environment took 33 minutes to complete the database update.
 
