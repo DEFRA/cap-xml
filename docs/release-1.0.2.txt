@@ -1,0 +1,19 @@
+# Cap-xml release 1.0.2
+
+Ticket: FIS-691
+
+# Release is to update a column data type in messages_archive table to allow data to archive correctly.
+
+# Instructions
+
+Perform a database update:
+
+Execute: CX_{stage}_01_UPDATE_DATABASE
+
+Note that development environment took 12 minutes and test environment took 33 minutes to complete the database update.
+
+The update will make the data type change and then execute the archive function, this is so that the lambda function does not time out when it runs overnight.
+
+When performing the database update the cap xml api still responds, however there is a big performance hit. So it may be necessary to schedule the release to execute overnight.  However if during normal hours we just run with the risk that the api will not perform very well.
+
+
