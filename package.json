@@ -9,7 +9,8 @@
   "scripts": {
     "deploy": "npm run validate-config && sls deploy -v --force",
     "lint": "standard",
-    "unit-test": "lab test -v -c --coverage-exclude lib/helpers -r console -o stdout -r lcov -o lcov.info -m 5000",
+    "unit-test": "lab test -v -c --coverage-exclude lib/helpers -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
+    "test-config": "bin/create-test-config",
     "test": "npm run lint && npm run unit-test",
     "validate-config": "node ./config/index.js"
   },
@@ -26,7 +27,6 @@
   "devDependencies": {
     "@hapi/code": "^8.0.2",
     "@hapi/lab": "^23.0.0",
-    "codeclimate-test-reporter": "0.5.1",
     "serverless": "1.81.1",
     "standard": "14.3.4"
   }
