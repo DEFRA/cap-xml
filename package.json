@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "description": "Serverless (AWS Lambda) project for CAP XML service",
   "engines": {
-    "node": ">12"
+    "node": ">16"
   },
   "main": "handler.js",
   "scripts": {
