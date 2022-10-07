@@ -3,11 +3,11 @@
   "version": "1.0.2",
   "description": "Serverless (AWS Lambda) project for CAP XML service",
   "engines": {
-    "node": ">12"
+    "node": ">16"
   },
   "main": "handler.js",
   "scripts": {
-    "deploy": "npm run validate-config && sls deploy -v --force",
+    "deploy": "npm run validate-config && sls deploy --verbose --force",
     "lint": "standard",
     "unit-test": "lab test -v -c --coverage-exclude lib/helpers -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
     "test-config": "bin/create-test-config",
@@ -18,16 +18,16 @@
   "license": "OGL",
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "feed": "4.2.1",
-    "moment": "2.27.0",
-    "pg": "8.3.3",
+    "feed": "4.2.2",
+    "moment": "^2.29.4",
+    "pg": "8.8.0",
     "sql": "0.78.0",
     "xml2js": "0.4.23"
   },
   "devDependencies": {
-    "@hapi/code": "^8.0.2",
-    "@hapi/lab": "^23.0.0",
-    "serverless": "1.81.1",
-    "standard": "14.3.4"
+    "@hapi/code": "^9.0.1",
+    "@hapi/lab": "^25.0.1",
+    "serverless": "^3.22.0",
+    "standard": "17.0.0"
   }
 }
