@@ -1,0 +1,20 @@
+# CAP-XML release 1.1.0
+
+## Tickets
+
+FSR-623 - https://eaflood.atlassian.net/browse/FSR-623
+
+#!Important for webops
+
+ - the role now need, "lambda:TagResource"
+
+ - CCoE WebOps to run Terraform apply to update user PRDCX user policy to allow for cloudformation:changeset api commands
+
+ - CCoE WebOps to run ansible playbook to update Node version on CX servers to node v16
+
+ - update prd deploy job(CX_{stage}_02_DEPLOY_LAMBDA) from node 12 to version 16
+
+
+Steps
+
+1 - Execute CX_{stage}_02_DEPLOY_LAMBDA
