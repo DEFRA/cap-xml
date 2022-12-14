@@ -1,7 +1,7 @@
 {
-  "Rule": "cap-xml-{stage}-archiveMessages-rule",
+  "Rule": "{stage}cpx-archiveMessages-rule",
   "Targets": [{
-    "Id": "cap-xml-{stage}-archiveMessages",
+    "Id": "{stage}cpx-archiveMessages",
     "Arn": "{lambdaArn}"
   }]
 }

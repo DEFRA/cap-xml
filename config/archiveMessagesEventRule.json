@@ -1,6 +1,6 @@
 {
   "Description": "Event rule to schedule the cap xml archiveMessages lambda function",
-  "Name": "cap-xml-{stage}-archiveMessages-rule",
+  "Name": "{stage}cpx-archiveMessages-rule",
   "RoleArn": "{roleArn}",
   "ScheduleExpression": "cron(0 2 * * ? *)",
   "State": "ENABLED"

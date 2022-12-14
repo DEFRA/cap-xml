@@ -1,6 +1,6 @@
 {
-  "FunctionName": "cap-xml-{stage}-archiveMessages",
-  "StatementId": "events-invoke-cap-xml-{stage}-archiveMessages",
+  "FunctionName": "{stage}cpx-archiveMessages",
+  "StatementId": "events-invoke-{stage}cpx-archiveMessages",
   "Action": "lambda:InvokeFunction",
   "Principal": "events.amazonaws.com",
   "SourceArn": "{ruleArn}"
