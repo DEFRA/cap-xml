@@ -1,7 +1,7 @@
 {
-  "Rule": "{stage}cpx-archiveMessages-rule",
+  "Rule": "cpx-{stage}-archiveMessages-rule",
   "Targets": [{
-    "Id": "{stage}cpx-archiveMessages",
+    "Id": "cpx-{stage}-archiveMessages",
     "Arn": "{lambdaArn}"
   }]
 }
