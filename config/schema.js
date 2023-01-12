@@ -9,7 +9,7 @@ module.exports = Joi.object({
     accountId: Joi.string().required().allow('', null),
     sessionToken: Joi.string().required().allow('', null),
     region: Joi.string().required(),
-    stage: Joi.string().required().allow('dv', 'qa', 'pp', 'ea'),
+    stage: Joi.string().required().allow('dev', 'qa', 'pp', 'ea'),
     rdsConnectionString: Joi.string().required()
   }),
   url: Joi.string().uri().required()
