@@ -17,8 +17,8 @@
   "author": "The Environment Agency",
   "license": "OGL",
   "dependencies": {
-    "@hapi/joi": "^17.1.1",
     "feed": "4.2.2",
+    "joi": "^17.11.0",
     "moment": "^2.29.4",
     "pg": "8.11.3",
     "sql": "0.78.0",
