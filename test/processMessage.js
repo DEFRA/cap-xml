@@ -316,4 +316,11 @@ lab.experiment('processMessage', () => {
     Code.expect(ret.body.status).to.not.equal('Test')
     Code.expect(ret.body.status).to.equal('Actual')
   })
+  lab.test('Invalid bodyXml format test', async () => {
+    // Set bodyXml to an invalid value (e.g., null, undefined, or an object)
+    const invalidBodyXml = null
+
+    // Expect the processMessage function to reject due to validation failure
+    await Code.expect(processMessage({ bodyXml: invalidBodyXml })).to.reject()
+  })
 })
