@@ -1,4 +1,4 @@
-service: cap-xml
+service: cpx
 frameworkVersion: '3'
 useDotenv: true
 provider:
