@@ -15,17 +15,13 @@ lab.experiment('getMessage', () => {
       }
     }
     // mock service
-    service.getMessage = (query, params) => {
-      return new Promise((resolve, reject) => {
-        resolve({
-          rows: [{
-            getmessage: {
-              alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>'
-            }
-          }]
-        })
-      })
-    }
+    service.getMessage = (query, params) => Promise.resolve({
+      rows: [{
+        getmessage: {
+          alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>'
+        }
+      }]
+    })
   })
 
   lab.test('Correct data test', async () => {
@@ -36,35 +32,28 @@ lab.experiment('getMessage', () => {
   })
 
   lab.test('No data found test', async () => {
-    service.getMessage = (query, params) => {
-      return new Promise((resolve, reject) => {
-        resolve({
-          rows: []
-        })
-      })
-    }
+    service.getMessage = (query, params) => Promise.resolve({
+      rows: []
+    })
+
     const err = await Code.expect(getMessage(event)).to.reject()
     Code.expect(err.message).to.equal('No message found')
   })
 
   lab.test('Incorrect database rows object', async () => {
-    service.getMessage = (query, params) => {
-      return new Promise((resolve, reject) => {
-        resolve({
-          rows: 1
-        })
-      })
-    }
+    service.getMessage = (query, params) => Promise.resolve({
+      rows: 1
+    })
+
     const err = await Code.expect(getMessage(event)).to.reject()
     Code.expect(err.message).to.equal('No message found')
   })
 
   lab.test('Incorrect database rows object', async () => {
-    service.getMessage = (query, params) => {
-      return new Promise((resolve, reject) => {
-        resolve({})
-      })
-    }
+    service.getMessage = (query, params) => Promise.resolve({
+      rows: {}
+    })
+
     const err = await Code.expect(getMessage(event)).to.reject()
     Code.expect(err.message).to.equal('No message found')
   })
@@ -80,11 +69,8 @@ lab.experiment('getMessage', () => {
   })
 
   lab.test('Error test', async () => {
-    service.getMessage = (query, params) => {
-      return new Promise((resolve, reject) => {
-        reject(new Error('test error'))
-      })
-    }
+    service.getMessage = (query, params) => Promise.reject(new Error('test error'))
+
     const err = await Code.expect(getMessage(event)).to.reject()
     Code.expect(err.message).to.equal('test error')
   })
@@ -96,6 +82,13 @@ lab.experiment('getMessage', () => {
 
   lab.test('event validation test 2', async () => {
     event = {}
+    await Code.expect(getMessage(event)).to.reject()
+  })
+  lab.test('Invalid id format test', async () => {
+    // Set the id to a value that is not a hexadecimal string
+    event.pathParameters.id = 'invalid_id_format'
+
+    // Expect the getMessage function to reject due to validation failure
     await Code.expect(getMessage(event)).to.reject()
   })
 })
