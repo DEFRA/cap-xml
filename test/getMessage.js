@@ -86,14 +86,11 @@ lab.experiment('getMessage', () => {
     await Code.expect(getMessage(event)).to.reject()
   })
   lab.test('Invalid id format test', async () => {
-    // Set the id to a value that is not a hexadecimal string
     event.pathParameters.id = 'invalid_id_format'
 
-    // Expect the getMessage function to reject due to validation failure
     await Code.expect(getMessage(event)).to.reject()
   })
   lab.test('Valid id format test', async () => {
-    // Set the id set to a hexadecimal string
     event.pathParameters.id = 'a1b2c3'
     const result = await getMessage(event)
     const body = result.body
