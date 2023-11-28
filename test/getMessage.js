@@ -5,6 +5,7 @@ const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
 const getMessage = require('../lib/functions/getMessage').getMessage
 const service = require('../lib/helpers/service')
+
 let event
 
 lab.experiment('getMessage', () => {
@@ -90,5 +91,13 @@ lab.experiment('getMessage', () => {
 
     // Expect the getMessage function to reject due to validation failure
     await Code.expect(getMessage(event)).to.reject()
+  })
+  lab.test('Valid id format test', async () => {
+    // Set the id set to a hexadecimal string
+    event.pathParameters.id = 'a1b2c3'
+    const result = await getMessage(event)
+    const body = result.body
+
+    Code.expect(body).to.equal('<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>')
   })
 })
