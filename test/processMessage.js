@@ -273,4 +273,9 @@ lab.experiment('processMessage', () => {
     // Expect the processMessage function to reject due to validation failure
     await Code.expect(processMessage({ bodyXml: invalidBodyXml })).to.reject()
   })
+  lab.test('Valid bodyXml format test', async () => {
+    const validBodyXml = capAlert.bodyXml
+
+    await Code.expect(processMessage({ bodyXml: validBodyXml })).to.not.reject()
+  })
 })
