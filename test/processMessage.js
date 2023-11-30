@@ -1,9 +1,11 @@
 'use strict'
 
+const joi = require('joi')
 const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
 const processMessage = require('../lib/functions/processMessage').processMessage
+const processMessageEventSchema = require('../lib/helpers/schemas').processMessageEventSchema
 const service = require('../lib/helpers/service')
 const moment = require('moment')
 let capAlert
@@ -277,5 +279,9 @@ lab.experiment('processMessage', () => {
     const validBodyXml = capAlert.bodyXml
 
     await Code.expect(processMessage({ bodyXml: validBodyXml })).to.not.reject()
+  })
+
+  lab.test('event schema', () => {
+    Code.expect(joi.isSchema(processMessageEventSchema)).to.equal(true)
   })
 })
