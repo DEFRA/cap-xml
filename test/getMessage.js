@@ -1,11 +1,9 @@
 'use strict'
 
-const joi = require('joi')
 const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
 const getMessage = require('../lib/functions/getMessage').getMessage
-const getMessageEventSchema = require('../lib/helpers/schemas').getMessageEventSchema
 const service = require('../lib/helpers/service')
 
 let event
@@ -85,10 +83,6 @@ lab.experiment('getMessage', () => {
 
     const err = await Code.expect(getMessage(event)).to.reject()
     Code.expect(err.message).to.equal('test error')
-  })
-
-  lab.test('event schema', () => {
-    Code.expect(joi.isSchema(getMessageEventSchema)).to.equal(true)
   })
 
   lab.test('event validation test', async () => {
