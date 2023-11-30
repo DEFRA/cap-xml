@@ -52,7 +52,16 @@ lab.experiment('getMessage', () => {
 
   lab.test('Incorrect database rows object', async () => {
     service.getMessage = (query, params) => Promise.resolve({
-      rows: {}
+      rows: [{}]
+    })
+
+    const err = await Code.expect(getMessage(event)).to.reject()
+    Code.expect(err.message).to.equal('No message found')
+  })
+
+  lab.test('Missing database rows object', async () => {
+    service.getMessage = (query, params) => Promise.resolve({
+      no_rows: []
     })
 
     const err = await Code.expect(getMessage(event)).to.reject()
