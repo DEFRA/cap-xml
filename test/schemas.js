@@ -18,5 +18,6 @@ lab.experiment('schemas', () => {
 
   lab.test('processMessageEventSchema', () => {
     Code.expect(Joi.isSchema(processMessageEventSchema)).to.equal(true)
+    Code.expect(processMessageEventSchema.validate({ bodyXml: '<xml />' })).to.equal({ value: { bodyXml: '<xml />' } })
   })
 })
