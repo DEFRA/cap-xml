@@ -16,6 +16,20 @@ lab.experiment('schemas', () => {
     Code.expect(Joi.isSchema(getMessageEventSchema)).to.equal(true)
   })
 
+  lab.test('getMessageEventSchema with invalid data', () => {
+    const invalidSampleData = { pathParameters: { id: 'invalid_hex' } }
+    const validationResult = getMessageEventSchema.validate(invalidSampleData)
+
+    Code.expect(validationResult.error).to.not.be.null()
+  })
+
+  lab.test('getMessageEventSchema with missing id', () => {
+    const dataWithoutId = { pathParameters: {} }
+    const validationResult = getMessageEventSchema.validate(dataWithoutId)
+
+    Code.expect(validationResult.error).to.not.be.null()
+  })
+
   lab.test('processMessageEventSchema', () => {
     Code.expect(Joi.isSchema(processMessageEventSchema)).to.equal(true)
     Code.expect(processMessageEventSchema.validate({ bodyXml: '<xml />' })).to.equal({ value: { bodyXml: '<xml />' } })
