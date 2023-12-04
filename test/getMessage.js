@@ -5,6 +5,7 @@ const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
 const getMessage = require('../lib/functions/getMessage').getMessage
 const service = require('../lib/helpers/service')
+
 let event
 
 lab.experiment('getMessage', () => {
@@ -51,7 +52,16 @@ lab.experiment('getMessage', () => {
 
   lab.test('Incorrect database rows object', async () => {
     service.getMessage = (query, params) => Promise.resolve({
-      rows: {}
+      rows: [{}]
+    })
+
+    const err = await Code.expect(getMessage(event)).to.reject()
+    Code.expect(err.message).to.equal('No message found')
+  })
+
+  lab.test('Missing database rows object', async () => {
+    service.getMessage = (query, params) => Promise.resolve({
+      no_rows: []
     })
 
     const err = await Code.expect(getMessage(event)).to.reject()
@@ -85,10 +95,15 @@ lab.experiment('getMessage', () => {
     await Code.expect(getMessage(event)).to.reject()
   })
   lab.test('Invalid id format test', async () => {
-    // Set the id to a value that is not a hexadecimal string
     event.pathParameters.id = 'invalid_id_format'
 
-    // Expect the getMessage function to reject due to validation failure
     await Code.expect(getMessage(event)).to.reject()
+  })
+  lab.test('Valid id format test', async () => {
+    event.pathParameters.id = 'a1b2c3'
+    const result = await getMessage(event)
+    const body = result.body
+
+    Code.expect(body).to.equal('<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>')
   })
 })
