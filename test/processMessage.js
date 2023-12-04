@@ -74,7 +74,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Correct data test with no previous alert on production', async () => {
     const config = require('../config/config.json')
-    config.aws.stage = 'ea'
+    config.aws.stage = 'prd'
 
     service.putMessage = (query) => {
       return new Promise((resolve, reject) => {
@@ -97,7 +97,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Correct data test with active alert on test', async () => {
     const config = require('../config/config.json')
-    config.aws.stage = 'ea'
+    config.aws.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
@@ -126,7 +126,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Correct data test with active alert on test with prexisting references field', async () => {
     const config = require('../config/config.json')
-    config.aws.stage = 'ea'
+    config.aws.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
@@ -156,7 +156,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Correct alert data test with an active on production', async () => {
     const config = require('../config/config.json')
-    config.aws.stage = 'ea'
+    config.aws.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
@@ -186,7 +186,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Correct update data test with an active on production', async () => {
     const config = require('../config/config.json')
-    config.aws.stage = 'ea'
+    config.aws.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
@@ -237,7 +237,7 @@ lab.experiment('processMessage', () => {
 
   lab.test('Correct data test for processMessage where previous message is active and has reference', async () => {
     const config = require('../config/config.json')
-    config.aws.stage = 'ea'
+    config.aws.stage = 'prd'
     // Replace the trivial promise with Promise.resolve
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
