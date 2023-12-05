@@ -1,0 +1,16 @@
+# CAP-XML release 1.2.0
+
+## Tickets
+
+FSR-1055 - https://eaflood.atlassian.net/browse/FSR-1055
+
+#!Important for webops
+
+ - update prd deploy job(CX_{stage}_02_DEPLOY_LAMBDA) from node 16 to version 18
+
+
+Steps
+
+1 - Execute CX_{stage}_02_DEPLOY_LAMBDA
+
+Message CFF Developers to confirm Lambda has updated to Node v18
