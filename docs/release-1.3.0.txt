@@ -1,0 +1,9 @@
+# Cap-xml release 1.3.0
+
+Ticket: FSR-1201 - update copyright https://eaflood.atlassian.net/browse/FSR-1210
+
+Release is to update copyright in the <rights> element.
+
+# Instructions
+
+Execute: CX_{stage}_02_DEPLOY_LAMBDA
