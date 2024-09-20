@@ -12,7 +12,8 @@
     "unit-test": "lab test -v -c --coverage-exclude lib/helpers -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
     "test-config": "bin/create-test-config",
     "test": "npm run lint && npm run unit-test",
-    "validate-config": "node ./config/index.js"
+    "validate-config": "node ./config/index.js",
+    "prepare": "husky"
   },
   "author": "The Environment Agency",
   "license": "OGL",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@hapi/code": "^9.0.3",
     "@hapi/lab": "^25.3.1",
+    "husky": "^9.1.6",
     "serverless": "^3.35.2",
     "standard": "17.1.2"
   }
