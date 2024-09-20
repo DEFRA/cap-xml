@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/DEFRA/cap-xml.svg?branch=master)](https://travis-ci.org/DEFRA/cap-xml)[![Maintainability](https://api.codeclimate.com/v1/badges/e6e726f97cd31b8569fa/maintainability)](https://codeclimate.com/github/DEFRA/cap-xml/maintainability)[![Test Coverage](https://api.codeclimate.com/v1/badges/e6e726f97cd31b8569fa/test_coverage)](https://codeclimate.com/github/DEFRA/cap-xml/test_coverage)
+![Build status](https://github.com/DEFRA/cap-xml/actions/workflows/ci.yml/badge.svg)[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_cap-xml&metric=alert_status)](https://sonarcloud.io/dashboard?id=DEFRA_cap-xml)[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_cap-xml&metric=coverage)](https://sonarcloud.io/dashboard?id=DEFRA_cap-xml)
 
 # CAP-XML Services
 
