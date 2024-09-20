@@ -15,6 +15,7 @@ provider:
     subnetIds:
       - ${env:SLS_SUBNET_1}
       - ${env:SLS_SUBNET_2}
+
 package:
  exclude:
    - test
@@ -31,3 +32,7 @@ functions:
   archiveMessages:
     handler: lib/functions/archiveMessages.archiveMessages
     timeout: 240
+    events:
+      - schedule:
+          rate: cron(0 2 * * ? *)
+          enabled: true
