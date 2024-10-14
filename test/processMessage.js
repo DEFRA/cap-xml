@@ -43,7 +43,7 @@ lab.experiment('processMessage', () => {
 
     const ret = await processMessage(capAlert)
     Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.identifier).to.equal('12345.4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
     Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
     Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
@@ -65,7 +65,7 @@ lab.experiment('processMessage', () => {
     }
     const ret = await processMessage(capAlert)
     Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.identifier).to.equal('12345.4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
     Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
     Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
@@ -87,7 +87,7 @@ lab.experiment('processMessage', () => {
 
     const ret = await processMessage(capAlert)
     Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.identifier).to.equal('12345.4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
     Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
     Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
@@ -116,7 +116,7 @@ lab.experiment('processMessage', () => {
 
     const ret = await processMessage(capAlert)
     Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.identifier).to.equal('12345.4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
     Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
     Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
@@ -146,7 +146,7 @@ lab.experiment('processMessage', () => {
 
     const ret = await processMessage(capAlert)
     Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.identifier).to.equal('12345.4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
     Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
     Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
@@ -176,7 +176,7 @@ lab.experiment('processMessage', () => {
 
     const ret = await processMessage(capAlert)
     Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.identifier).to.equal('12345.4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
     Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
     Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
@@ -206,7 +206,7 @@ lab.experiment('processMessage', () => {
 
     const ret = await processMessage(capUpdate)
     Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.identifier).to.equal('12345.4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
     Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
     Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
@@ -259,7 +259,7 @@ lab.experiment('processMessage', () => {
 
     const ret = await processMessage(capAlert)
     Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(ret.body.identifier).to.equal('12345.4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
     Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
     Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
