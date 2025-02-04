@@ -1,9 +1,9 @@
 {
   "name": "cap-xml",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Serverless (AWS Lambda) project for CAP XML service",
   "engines": {
-    "node": ">18"
+    "node": ">=18"
   },
   "main": "handler.js",
   "scripts": {
