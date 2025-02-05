@@ -4,7 +4,7 @@
 
 ## Synopsis
 
-This project is implementation to provide CAP XML services, through the use of AWS Lambda.
+This project provides CAP XML services through the use of AWS Lambda.
 
 ## Installing
 
@@ -13,6 +13,11 @@ This project is implementation to provide CAP XML services, through the use of A
 ## Running Unit Tests
 
 `npm test`
+
+### Running / Debugging Lambdas Locally
+
+Following Serverless V.3 reaching end of support and a decision not to [upgrade to Serverless V.4](https://wb.serverless.com/framework/docs-guides-upgrading-v4), running / debugging Lambdas is **not** supported temporarily.
+Alternative technlogies will be used to provide this functionality as soon as possible
 
 ## Contributing to this project
 
