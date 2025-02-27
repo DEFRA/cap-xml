@@ -1,9 +1,9 @@
 {
   "name": "cap-xml",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "CAP XML service",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "main": "handler.js",
   "scripts": {
