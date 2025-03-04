@@ -6,6 +6,10 @@
 
 This project provides CAP XML services through the use of AWS Lambda.
 
+## Prerequisites
+
+- **Node.js 20** or higher
+
 ## Installing
 
 `npm install`
