@@ -24,7 +24,6 @@ jobs:
 
             - name: Run unit tests
               run: |
-                npm run test-config
                 npm run unit-test
 
             - name: Analyse code quality

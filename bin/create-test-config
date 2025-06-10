@@ -1,2 +1,0 @@
-echo "Creating config.json"
-cp ./config/config.example.json ./config/config.json
