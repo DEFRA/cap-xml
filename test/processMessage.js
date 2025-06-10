@@ -9,11 +9,14 @@ const moment = require('moment')
 let capAlert
 let capUpdate
 
+const ORIGINAL_ENV = process.env
+
 const tomorrow = new Date(new Date().getTime() + (24 * 60 * 60 * 1000))
 const yesterday = new Date(new Date().getTime() - (24 * 60 * 60 * 1000))
 
 lab.experiment('processMessage', () => {
   lab.beforeEach(() => {
+    process.env = { ...ORIGINAL_ENV }
     capAlert = require('./data/capAlert.json')
     capUpdate = require('./data/capUpdate.json')
 
@@ -73,8 +76,7 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Correct data test with no previous alert on production', async () => {
-    const config = require('../config/config.json')
-    config.aws.stage = 'prd'
+    process.env.stage = 'prd'
 
     service.putMessage = (query) => {
       return new Promise((resolve, reject) => {
@@ -96,8 +98,7 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Correct data test with active alert on test', async () => {
-    const config = require('../config/config.json')
-    config.aws.stage = 'prd'
+    process.env.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
@@ -125,8 +126,7 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Correct data test with active alert on test with prexisting references field', async () => {
-    const config = require('../config/config.json')
-    config.aws.stage = 'prd'
+    process.env.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
@@ -155,8 +155,7 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Correct alert data test with an active on production', async () => {
-    const config = require('../config/config.json')
-    config.aws.stage = 'prd'
+    process.env.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
@@ -185,8 +184,7 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Correct update data test with an active on production', async () => {
-    const config = require('../config/config.json')
-    config.aws.stage = 'prd'
+    process.env.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
@@ -236,8 +234,7 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Correct data test for processMessage where previous message is active and has reference', async () => {
-    const config = require('../config/config.json')
-    config.aws.stage = 'prd'
+    process.env.stage = 'prd'
     // Replace the trivial promise with Promise.resolve
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
