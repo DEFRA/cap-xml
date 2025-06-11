@@ -53,7 +53,7 @@ lab.experiment('Config test', () => {
             sessionToken: 'dummy session token',
             region: 'dummy region',
             stage: 'dummy',
-            rdsConnectionString: 'dummy RDSconnection string'
+            rdsConnectionString: 'dummy RDS connection string'
           },
           url: 'dummy url'
         }
