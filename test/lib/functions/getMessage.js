@@ -3,8 +3,8 @@
 const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
-const getMessage = require('../lib/functions/getMessage').getMessage
-const service = require('../lib/helpers/service')
+const getMessage = require('../../../lib/functions/getMessage').getMessage
+const service = require('../../../lib/helpers/service')
 
 let event
 

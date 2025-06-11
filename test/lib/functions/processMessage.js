@@ -3,8 +3,8 @@
 const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
-const processMessage = require('../lib/functions/processMessage').processMessage
-const service = require('../lib/helpers/service')
+const processMessage = require('../../../lib/functions/processMessage').processMessage
+const service = require('../../../lib/helpers/service')
 const moment = require('moment')
 let capAlert
 let capUpdate
