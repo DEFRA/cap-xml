@@ -9,12 +9,12 @@ const ORIGINAL_ENV = process.env
 lab.experiment('Config test', () => {
   lab.beforeEach(() => {
     process.env = { ...ORIGINAL_ENV }
-    process.env.stage = 'dummy stage'
-    process.env.CPX_REGION = 'dummy region'
-    process.env.CPX_DB_USERNAME = 'dummy db username'
-    process.env.CPX_DB_PASSWORD = 'dummy db password'
-    process.env.CPX_DB_NAME = 'dummy db name'
-    process.env.CPX_DB_HOST = 'dummy db host'
+    process.env.stage = 'dummy-stage'
+    process.env.CPX_REGION = 'dummy-region'
+    process.env.CPX_DB_USERNAME = 'dummy-db-username'
+    process.env.CPX_DB_PASSWORD = 'dummy-db-password'
+    process.env.CPX_DB_NAME = 'dummy-db-name'
+    process.env.CPX_DB_HOST = 'dummy-db-host'
     process.env.CPX_AGW_URL = 'http://127.0.0.1'
   })
 
