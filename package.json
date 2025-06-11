@@ -9,7 +9,7 @@
   "scripts": {
     "deploy": "npm run validate-config && sls deploy --verbose --force",
     "lint": "standard",
-    "unit-test": "lab test -v -c --coverage-exclude lib/helpers -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
+    "unit-test": "lab test -v -c -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
     "test": "npm run lint && npm run unit-test",
     "validate-config": "node ./config/index.js"
   },
