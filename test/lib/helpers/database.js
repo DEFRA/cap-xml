@@ -10,14 +10,11 @@ const lab = exports.lab = Lab.script()
 const ORIGINAL_ENV = process.env
 
 lab.experiment('database helper', () => {
-  let sandbox
   let database
   let mockPoolInstance
   let mockPg
 
   lab.beforeEach(() => {
-    sandbox = sinon.createSandbox()
-
     // Mock environment
     process.env = { ...ORIGINAL_ENV }
     process.env.stage = 'mock-stage'
@@ -30,13 +27,13 @@ lab.experiment('database helper', () => {
 
     // Mock pg.Pool
     mockPoolInstance = {
-      query: sandbox.stub().resolves({ rows: [] }),
-      end: sandbox.stub().resolves(),
+      query: sinon.stub().resolves({ rows: [] }),
+      end: sinon.stub().resolves(),
       ending: false
     }
 
     mockPg = {
-      Pool: sandbox.stub().returns(mockPoolInstance)
+      Pool: sinon.stub().returns(mockPoolInstance)
     }
 
     // Load module with mocked pg
@@ -46,7 +43,7 @@ lab.experiment('database helper', () => {
   })
 
   lab.afterEach(() => {
-    sandbox.restore()
+    sinon.restore()
   })
 
   lab.test('init creates a new pool with correct config', () => {
