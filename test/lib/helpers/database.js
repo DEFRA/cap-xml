@@ -2,11 +2,10 @@
 
 const Lab = require('@hapi/lab')
 const Code = require('@hapi/code')
-const Sinon = require('sinon')
+const sinon = require('sinon')
 const Proxyquire = require('proxyquire')
 
 const lab = exports.lab = Lab.script()
-const { expect } = Code
 
 const ORIGINAL_ENV = process.env
 
@@ -17,7 +16,7 @@ lab.experiment('database helper', () => {
   let mockPg
 
   lab.beforeEach(() => {
-    sandbox = Sinon.createSandbox()
+    sandbox = sinon.createSandbox()
 
     // Mock environment
     process.env = { ...ORIGINAL_ENV }
@@ -52,8 +51,8 @@ lab.experiment('database helper', () => {
 
   lab.test('init creates a new pool with correct config', () => {
     database.init()
-    expect(mockPg.Pool.calledOnce).to.be.true()
-    expect(mockPg.Pool.firstCall.args[0]).to.include({
+    Code.expect(mockPg.Pool.calledOnce).to.be.true()
+    Code.expect(mockPg.Pool.firstCall.args[0]).to.include({
       connectionString: 'postgresql://dummy-db-username:dummy-db-password@dummy-db-host:5432/dummy-db-name'
     })
   })
@@ -61,14 +60,14 @@ lab.experiment('database helper', () => {
   lab.test('query uses existing pool to run SQL', async () => {
     database.init()
     await database.query('SELECT 1')
-    expect(mockPoolInstance.query.calledWith('SELECT 1')).to.be.true()
+    Code.expect(mockPoolInstance.query.calledWith('SELECT 1')).to.be.true()
   })
 
   lab.test('query reinitializes pool if pool is ending', async () => {
     database.init()
     mockPoolInstance.ending = true
     await database.query('SELECT 1')
-    expect(mockPg.Pool.calledTwice).to.be.true()
-    expect(mockPoolInstance.query.calledWith('SELECT 1')).to.be.true()
+    Code.expect(mockPg.Pool.calledTwice).to.be.true()
+    Code.expect(mockPoolInstance.query.calledWith('SELECT 1')).to.be.true()
   })
 })
