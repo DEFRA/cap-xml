@@ -9,12 +9,12 @@ const ORIGINAL_ENV = process.env
 lab.experiment('Config test', () => {
   lab.beforeEach(() => {
     process.env = { ...ORIGINAL_ENV }
-    process.env.stage = 'dummy-stage'
-    process.env.CPX_REGION = 'dummy-region'
-    process.env.CPX_DB_USERNAME = 'dummy-db-username'
-    process.env.CPX_DB_PASSWORD = 'dummy-db-password'
-    process.env.CPX_DB_NAME = 'dummy-db-name'
-    process.env.CPX_DB_HOST = 'dummy-db-host'
+    process.env.stage = 'mock-stage'
+    process.env.CPX_REGION = 'mock-region'
+    process.env.CPX_DB_USERNAME = 'mock-db-username'
+    process.env.CPX_DB_PASSWORD = 'mock-db-password'
+    process.env.CPX_DB_NAME = 'mock-db-name'
+    process.env.CPX_DB_HOST = 'mock-db-host'
     process.env.CPX_AGW_URL = 'http://127.0.0.1'
   })
 
@@ -47,15 +47,15 @@ lab.experiment('Config test', () => {
       sinon.stub(schema, 'validate').callsFake(function (...innerArgs) {
         innerArgs[0] = {
           aws: {
-            accessKeyId: 'dummy access key ID',
-            secretAccessKey: 'dummy secret access key',
-            accountId: 'dummy account ID',
-            sessionToken: 'dummy session token',
-            region: 'dummy region',
-            stage: 'dummy',
-            rdsConnectionString: 'dummy RDS connection string'
+            accessKeyId: 'mock access key ID',
+            secretAccessKey: 'mock secret access key',
+            accountId: 'mock account ID',
+            sessionToken: 'mock session token',
+            region: 'mock region',
+            stage: 'mock',
+            rdsConnectionString: 'mock RDS connection string'
           },
-          url: 'dummy url'
+          url: 'mock url'
         }
         return schema.validate.wrappedMethod.apply(this, innerArgs)
       })

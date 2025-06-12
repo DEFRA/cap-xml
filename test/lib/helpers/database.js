@@ -20,12 +20,12 @@ lab.experiment('database helper', () => {
 
     // Mock environment
     process.env = { ...ORIGINAL_ENV }
-    process.env.stage = 'dummy-stage'
-    process.env.CPX_REGION = 'dummy-region'
-    process.env.CPX_DB_USERNAME = 'dummy-db-username'
-    process.env.CPX_DB_PASSWORD = 'dummy-db-password'
-    process.env.CPX_DB_NAME = 'dummy-db-name'
-    process.env.CPX_DB_HOST = 'dummy-db-host'
+    process.env.stage = 'mock-stage'
+    process.env.CPX_REGION = 'mock-region'
+    process.env.CPX_DB_USERNAME = 'mock-db-username'
+    process.env.CPX_DB_PASSWORD = 'mock-db-password'
+    process.env.CPX_DB_NAME = 'mock-db-name'
+    process.env.CPX_DB_HOST = 'mock-db-host'
     process.env.CPX_AGW_URL = 'http://127.0.0.1'
 
     // Mock pg.Pool
@@ -53,7 +53,7 @@ lab.experiment('database helper', () => {
     database.init()
     Code.expect(mockPg.Pool.calledOnce).to.be.true()
     Code.expect(mockPg.Pool.firstCall.args[0]).to.include({
-      connectionString: 'postgresql://dummy-db-username:dummy-db-password@dummy-db-host:5432/dummy-db-name'
+      connectionString: 'postgresql://mock-db-username:mock-db-password@mock-db-host:5432/mock-db-name'
     })
   })
 
