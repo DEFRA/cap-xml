@@ -3,8 +3,10 @@
 const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
+const sinon = require('sinon')
 const processMessage = require('../../../lib/functions/processMessage').processMessage
 const service = require('../../../lib/helpers/service')
+const aws = require('../../../lib/helpers/aws')
 const moment = require('moment')
 let capAlert
 let capUpdate
@@ -32,6 +34,10 @@ lab.experiment('processMessage', () => {
         identifier: '4eb3b7350ab7aa443650fc9351f2'
       }]
     })
+  })
+
+  lab.afterEach(() => {
+    sinon.restore()
   })
 
   lab.test('Correct data test with no previous alert on test', async () => {
@@ -213,6 +219,12 @@ lab.experiment('processMessage', () => {
   })
 
   lab.test('Bad data test', async () => {
+    sinon.stub(aws.email, 'publishMessage').callsFake((message) => {
+      return new Promise((resolve, reject) => {
+        resolve()
+      })
+    })
+    process.env.CPX_SNS_TOPIC = 'arn:aws:sns:region:account:topic'
     await Code.expect(processMessage(1)).to.reject()
   })
 
