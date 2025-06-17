@@ -8,7 +8,8 @@ const schema = Joi.object({
   dbHost: Joi.string().required(),
   dbName: Joi.string().required(),
   dbPassword: Joi.string().required(),
-  gatewayUrl: Joi.string().uri().required()
+  gatewayUrl: Joi.string().uri().required(),
+  snsTopic: Joi.string()
 })
 
 const result = schema.validate({
@@ -18,7 +19,8 @@ const result = schema.validate({
   dbHost: process.env.CPX_DB_HOST,
   dbName: process.env.CPX_DB_NAME,
   dbPassword: process.env.CPX_DB_PASSWORD,
-  gatewayUrl: process.env.CPX_AGW_URL
+  gatewayUrl: process.env.CPX_AGW_URL,
+  snsTopic: process.env.CPX_SNS_TOPIC
 })
 
 if (result.error) {
