@@ -32,7 +32,7 @@ lab.experiment('AWS Helper Tests', () => {
       const messageLog = {
         errorMessage: 'Test Error',
         dateCreated: '2024-01-01',
-        fwsMessage: 'Test Message'
+        receivedMessage: 'Test Message'
       }
 
       await email.publishMessage(messageLog)
