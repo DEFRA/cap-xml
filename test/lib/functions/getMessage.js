@@ -3,9 +3,13 @@
 const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
-const getMessage = require('../../../lib/functions/getMessage').getMessage
+const sinon = require('sinon')
+const fs = require('fs')
+const path = require('path')
+let getMessage = require('../../../lib/functions/getMessage').getMessage
 const service = require('../../../lib/helpers/service')
-
+const getMessageXmlInvalid = fs.readFileSync(path.join(__dirname, 'data', 'getMessage-invalid.xml'), 'utf8')
+const getMessageXmlValid = fs.readFileSync(path.join(__dirname, 'data', 'getMessage-valid.xml'), 'utf8')
 let event
 
 lab.experiment('getMessage', () => {
@@ -105,5 +109,48 @@ lab.experiment('getMessage', () => {
     const body = result.body
 
     Code.expect(body).to.equal('<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>')
+  })
+
+  lab.test('XsdSchema validation test: invalid alert', async () => {
+    let consoleLogStub
+    try {
+      delete require.cache[require.resolve('../../../lib/functions/getMessage')]
+      consoleLogStub = sinon.stub(console, 'log')
+      const func = require('../../../lib/functions/getMessage').getMessage
+      service.getMessage = () => Promise.resolve({
+        rows: [{
+          getmessage: {
+            alert: getMessageXmlInvalid
+          }
+        }]
+      })
+      await func(event)
+      Code.expect(consoleLogStub.callCount).to.equal(2)
+      Code.expect(consoleLogStub.getCall(0).args[0]).to.equal('CAP get message failed validation')
+      Code.expect(consoleLogStub.getCall(1).args[0]).to.equal('[{"rawMessage":"message.xml:19: Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}geocode\': This element is not expected. Expected is ( {urn:oasis:names:tc:emergency:cap:1.2}areaDesc ).","message":"Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}geocode\': This element is not expected. Expected is ( {urn:oasis:names:tc:emergency:cap:1.2}areaDesc ).","loc":{"fileName":"message.xml","lineNumber":19}}]')
+    } finally {
+      consoleLogStub.restore()
+      getMessage = require('../../../lib/functions/getMessage').getMessage
+    }
+  })
+  lab.test('XsdSchema validation test: valid alert', async () => {
+    let consoleLogStub
+    try {
+      delete require.cache[require.resolve('../../../lib/functions/getMessage')]
+      consoleLogStub = sinon.stub(console, 'log')
+      const func = require('../../../lib/functions/getMessage').getMessage
+      service.getMessage = () => Promise.resolve({
+        rows: [{
+          getmessage: {
+            alert: getMessageXmlValid
+          }
+        }]
+      })
+      await func(event)
+      Code.expect(consoleLogStub.callCount).to.equal(0)
+    } finally {
+      consoleLogStub.restore()
+      getMessage = require('../../../lib/functions/getMessage').getMessage
+    }
   })
 })
