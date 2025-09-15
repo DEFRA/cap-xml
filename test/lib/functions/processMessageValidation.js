@@ -46,6 +46,7 @@ lab.experiment('processMessage validation logging', () => {
       await processMessage({ bodyXml: capAlert.bodyXml })
       Code.expect(logs).to.include('CAP message failed validation: pre processing')
       Code.expect(logs).to.include('CAP message failed validation: post processing')
+      Code.expect(logs[2]).to.include('<identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>') // expect log of xml message, indentifier can confirm
     } finally {
       console.log = origLog
     }
