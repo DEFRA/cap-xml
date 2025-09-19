@@ -21,7 +21,7 @@ const FakeMessage = function () {
   }
   this.putQuery = {}
 }
-const fakeSchema = { validate: () => ({ error: null }) }
+const fakeSchema = { validateAsync: async () => ({ error: null }) }
 const fakeAws = { email: { publishMessage: sinon.stub() } }
 
 const loadWithValidateMock = (validateMock) => {
@@ -144,27 +144,28 @@ lab.experiment('processMessage validation logging', () => {
       .reject()
     const errors = JSON.parse(ret.message.replace('[500] ', ''))
 
-    Code.expect(errors.length).to.equal(15)
+    Code.expect(errors.length).to.equal(16)
     // Helper to generate message asserts below
     // errors.forEach((er, i) => {
     //   console.log(`Code.expect(errors[${i}].message).to.equal('${er.message.replace(/'/g, "\\'")}')`)
     // })
 
-    Code.expect(errors[0].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}identifier\': [facet \'minLength\'] The value has a length of \'0\'; this underruns the allowed minimum length of \'1\'.')
-    Code.expect(errors[1].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sender\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'www.gov.uk/environment-agency\'}.')
-    Code.expect(errors[2].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sent\': \'\' is not a valid value of the local atomic type.')
-    Code.expect(errors[3].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}status\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Actual\', \'Exercise\', \'System\', \'Test\', \'Draft\'}.')
-    Code.expect(errors[4].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}msgType\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Alert\', \'Update\', \'Cancel\', \'Ack\', \'Error\'}.')
-    Code.expect(errors[5].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}source\': [facet \'minLength\'] The value has a length of \'0\'; this underruns the allowed minimum length of \'1\'.')
-    Code.expect(errors[6].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}scope\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Public\', \'Restricted\', \'Private\'}.')
-    Code.expect(errors[7].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}category\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Geo\', \'Met\', \'Safety\', \'Security\', \'Rescue\', \'Fire\', \'Health\', \'Env\', \'Transport\', \'Infra\', \'CBRNE\', \'Other\'}.')
-    Code.expect(errors[8].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}urgency\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Immediate\', \'Expected\', \'Future\', \'Past\', \'Unknown\'}.')
-    Code.expect(errors[9].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}severity\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Extreme\', \'Severe\', \'Moderate\', \'Minor\', \'Unknown\'}.')
-    Code.expect(errors[10].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}certainty\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Observed\', \'Likely\', \'Possible\', \'Unlikely\', \'Unknown\'}.')
-    Code.expect(errors[11].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}expires\': \'\' is not a valid value of the local atomic type.')
-    Code.expect(errors[12].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}senderName\': [facet \'minLength\'] The value has a length of \'0\'; this underruns the allowed minimum length of \'1\'.')
-    Code.expect(errors[13].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}areaDesc\': [facet \'minLength\'] The value has a length of \'0\'; this underruns the allowed minimum length of \'1\'.')
-    Code.expect(errors[14].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}polygon\': [facet \'minLength\'] The value has a length of \'0\'; this underruns the allowed minimum length of \'1\'.')
+    Code.expect(errors[0].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sent\': \'\' is not a valid value of the local atomic type.')
+    Code.expect(errors[1].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}status\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Actual\', \'Exercise\', \'System\', \'Test\', \'Draft\'}.')
+    Code.expect(errors[2].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}msgType\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Alert\', \'Update\', \'Cancel\', \'Ack\', \'Error\'}.')
+    Code.expect(errors[3].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}scope\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Public\', \'Restricted\', \'Private\'}.')
+    Code.expect(errors[4].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}category\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Geo\', \'Met\', \'Safety\', \'Security\', \'Rescue\', \'Fire\', \'Health\', \'Env\', \'Transport\', \'Infra\', \'CBRNE\', \'Other\'}.')
+    Code.expect(errors[5].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}urgency\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Immediate\', \'Expected\', \'Future\', \'Past\', \'Unknown\'}.')
+    Code.expect(errors[6].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}severity\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Extreme\', \'Severe\', \'Moderate\', \'Minor\', \'Unknown\'}.')
+    Code.expect(errors[7].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}certainty\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Observed\', \'Likely\', \'Possible\', \'Unlikely\', \'Unknown\'}.')
+    Code.expect(errors[8].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}expires\': \'\' is not a valid value of the local atomic type.')
+    Code.expect(errors[9].message).to.equal('"alert.identifier[0]" is not allowed to be empty')
+    Code.expect(errors[10].message).to.equal('"alert.sender[0]" must be [www.gov.uk/environment-agency]')
+    Code.expect(errors[11].message).to.equal('"alert.sender[0]" is not allowed to be empty')
+    Code.expect(errors[12].message).to.equal('"alert.source[0]" is not allowed to be empty')
+    Code.expect(errors[13].message).to.equal('"alert.info[0].senderName[0]" is not allowed to be empty')
+    Code.expect(errors[14].message).to.equal('"alert.info[0].area[0].areaDesc[0]" is not allowed to be empty')
+    Code.expect(errors[15].message).to.equal('"alert.info[0].area[0].polygon[0]" is not allowed to be empty')
 
     Code.expect(awsStub.email.publishMessage.callCount).to.equal(1)
   })
@@ -213,16 +214,16 @@ lab.experiment('processMessage validation logging', () => {
       .reject()
     const errors = JSON.parse(ret.message.replace('[500] ', ''))
     Code.expect(errors.length).to.equal(10)
-    Code.expect(errors[0].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sender\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'www.gov.uk/environment-agency\'}.')
-    Code.expect(errors[1].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sent\': \'2026-05-28\' is not a valid value of the local atomic type.')
-    Code.expect(errors[2].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}status\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Actual\', \'Exercise\', \'System\', \'Test\', \'Draft\'}.')
-    Code.expect(errors[3].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}msgType\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Alert\', \'Update\', \'Cancel\', \'Ack\', \'Error\'}.')
-    Code.expect(errors[4].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}scope\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Public\', \'Restricted\', \'Private\'}.')
-    Code.expect(errors[5].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}category\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Geo\', \'Met\', \'Safety\', \'Security\', \'Rescue\', \'Fire\', \'Health\', \'Env\', \'Transport\', \'Infra\', \'CBRNE\', \'Other\'}.')
-    Code.expect(errors[6].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}urgency\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Immediate\', \'Expected\', \'Future\', \'Past\', \'Unknown\'}.')
-    Code.expect(errors[7].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}severity\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Extreme\', \'Severe\', \'Moderate\', \'Minor\', \'Unknown\'}.')
-    Code.expect(errors[8].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}certainty\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Observed\', \'Likely\', \'Possible\', \'Unlikely\', \'Unknown\'}.')
-    Code.expect(errors[9].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}expires\': \'2026-05-29\' is not a valid value of the local atomic type.')
+    Code.expect(errors[0].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sent\': \'2026-05-28\' is not a valid value of the local atomic type.')
+    Code.expect(errors[1].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}status\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Actual\', \'Exercise\', \'System\', \'Test\', \'Draft\'}.')
+    Code.expect(errors[2].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}msgType\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Alert\', \'Update\', \'Cancel\', \'Ack\', \'Error\'}.')
+    Code.expect(errors[3].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}scope\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Public\', \'Restricted\', \'Private\'}.')
+    Code.expect(errors[4].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}category\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Geo\', \'Met\', \'Safety\', \'Security\', \'Rescue\', \'Fire\', \'Health\', \'Env\', \'Transport\', \'Infra\', \'CBRNE\', \'Other\'}.')
+    Code.expect(errors[5].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}urgency\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Immediate\', \'Expected\', \'Future\', \'Past\', \'Unknown\'}.')
+    Code.expect(errors[6].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}severity\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Extreme\', \'Severe\', \'Moderate\', \'Minor\', \'Unknown\'}.')
+    Code.expect(errors[7].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}certainty\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Observed\', \'Likely\', \'Possible\', \'Unlikely\', \'Unknown\'}.')
+    Code.expect(errors[8].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}expires\': \'2026-05-29\' is not a valid value of the local atomic type.')
+    Code.expect(errors[9].message).to.equal('"alert.sender[0]" must be [www.gov.uk/environment-agency]')
 
     Code.expect(awsStub.email.publishMessage.callCount).to.equal(1)
   })
