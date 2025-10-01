@@ -1,0 +1,34 @@
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>
+  <sender>www.gov.uk/environment-agency</sender>
+  <sent>2025-11-06T08:00:27+00:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <source>Flood warning service</source>
+  <scope>Public</scope>
+  <references />
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event><![CDATA[Update]]></event>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <expires>2025-11-16T08:00:27+00:00</expires>
+    <senderName>Environment Agency</senderName>
+    <description><![CDATA[description]]></description>
+    <instruction><![CDATA[instructions
+      - For access to flood warning information offline call Floodline on 0345 988 1188 using quickdial code: 210010.
+      ]]></instruction>
+    <web>https://check-for-flooding.service.gov.uk</web>
+    <contact>0345 988 1188</contact>
+    <area>
+      <areaDesc><![CDATA[Rivers Lowther and Eamont]]></areaDesc>
+      <polygon>54.54509,-2.95255 54.54498,-2.95268...</polygon>
+      <geocode>
+        <valueName>TargetAreaCode</valueName>
+        <value><![CDATA[TESTAREA1]]></value>
+      </geocode>
+    </area>
+  </info>
+</alert>

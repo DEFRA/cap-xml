@@ -4,24 +4,118 @@ const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
 const sinon = require('sinon')
+const fs = require('fs')
+const path = require('path')
+const xml2js = require('xml2js')
 const processMessage = require('../../../lib/functions/processMessage').processMessage
 const service = require('../../../lib/helpers/service')
 const aws = require('../../../lib/helpers/aws')
-const moment = require('moment')
-let capAlert
-let capUpdate
-
+const Message = require('../../../lib/models/message')
+const v2MessageMapping = require('../../../lib/models/v2MessageMapping')
+const nwsAlert = { bodyXml: fs.readFileSync(path.join(__dirname, 'data', 'nws-alert.xml'), 'utf8') }
 const ORIGINAL_ENV = process.env
-
+let clock
 const tomorrow = new Date(new Date().getTime() + (24 * 60 * 60 * 1000))
-const yesterday = new Date(new Date().getTime() - (24 * 60 * 60 * 1000))
+const identifier = '4eb3b7350ab7aa443650fc9351f02940E'
+const identifierV2 = `2.49.0.0.826.1.20251106080027.${identifier}`
+const code = 'MCP:v2.0'
+const referencesV1 = 'www.gov.uk/environment-agency,4eb3b7350ab7aa443650fc9351f2,2020-01-01T00:00:00+00:00'
+const referencesV2 = 'www.gov.uk/environment-agency,2.49.0.0.826.1.20251106080027.4eb3b7350ab7aa443650fc9351f02940E,2020-01-01T00:00:00+00:00'
+
+// ***********************************************************
+// Helper functions
+// ***********************************************************
+const expectResponse = (response, putQuery, severity = 'Minor', status = 'Test', msgType = 'Alert', references = false, previousReferences = false, quickdialNumber = true) => {
+  expectResponseAndPutQuery(response, putQuery, status, msgType, references, previousReferences)
+  expectMessageV1(new Message(putQuery.values[3]), severity, status, references, previousReferences, quickdialNumber)
+  expectMessageV2(new Message(putQuery.values[10]), severity, status, references, previousReferences, quickdialNumber)
+}
+
+const expectResponseAndPutQuery = (response, putQuery, status, msgType, references, previousReferences) => {
+  // test response
+  Code.expect(response.statusCode).to.equal(200)
+  Code.expect(response.body.identifier).to.equal(identifier)
+  Code.expect(response.body.fwisCode).to.equal('TESTAREA1')
+  Code.expect(response.body.sent).to.equal('2025-11-06T08:00:27+00:00')
+  Code.expect(response.body.expires).to.equal('2025-11-16T08:00:27+00:00')
+  Code.expect(response.body.status).to.equal(status)
+
+  // test putquery
+  Code.expect(putQuery.text).to.equal('INSERT INTO "messages" ("identifier", "msg_type", "references", "alert", "fwis_code", "expires", "sent", "created", "identifier_v2", "references_v2", "alert_v2") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)')
+  Code.expect(putQuery.values[0]).to.equal(identifier)
+  Code.expect(putQuery.values[1]).to.equal(msgType)
+  if (references) {
+    Code.expect(putQuery.values[2]).to.equal(previousReferences ? `${referencesV1} ${referencesV1}` : referencesV1)
+  } else {
+    Code.expect(putQuery.values[2]).to.be.empty()
+  }
+  Code.expect(putQuery.values[3]).to.not.be.empty()
+  Code.expect(putQuery.values[4]).to.equal('TESTAREA1')
+  Code.expect(putQuery.values[5]).to.equal('2025-11-16T08:00:27+00:00')
+  Code.expect(putQuery.values[6]).to.equal('2025-11-06T08:00:27+00:00')
+  Code.expect(putQuery.values[7]).to.equal('2020-01-01T00:00:00.000Z')
+  Code.expect(putQuery.values[8]).to.equal(identifierV2)
+  if (references) {
+    Code.expect(putQuery.values[9]).to.equal(previousReferences ? `${referencesV2} ${referencesV2}` : referencesV2)
+  } else {
+    Code.expect(putQuery.values[9]).to.be.empty()
+  }
+  Code.expect(putQuery.values[10]).to.not.be.empty()
+}
+
+const expectMessageV1 = (message, severity, status, references, previousReferences, quickdialNumber) => {
+  Code.expect(message.identifier).to.equal(identifier)
+  Code.expect(message.status).to.equal(status)
+  Code.expect(message.code).to.equal('')
+  if (references) {
+    Code.expect(message.references).to.equal(previousReferences ? `${referencesV1} ${referencesV1}` : referencesV1)
+  } else {
+    Code.expect(message.references).to.be.empty()
+  }
+  Code.expect(message.event).to.equal('Update')
+  Code.expect(message.severity).to.equal(severity)
+  Code.expect(message.onset).to.equal('')
+  Code.expect(message.headline).to.equal('')
+  Code.expect(message.instruction).not.to.contain('https://check-for-flooding.service.gov.uk/target-area/TESTAREA1')
+  if (quickdialNumber) {
+    Code.expect(message.instruction).not.to.contain('- call Floodline on 0345 988 1188, using quickdial code 210010')
+    Code.expect(message.instruction).to.contain('- For access to flood warning information offline call Floodline on 0345 988 1188 using quickdial code: 210010.')
+  } else {
+    Code.expect(message.instruction).not.to.contain('- call Floodline on 0345 988 1188, using quickdial code 210010')
+    Code.expect(message.instruction).to.contain('- For access to flood warning information offline call Floodline on 0345 988 1188 using')
+  }
+}
+
+const expectMessageV2 = (message, severity, status, references, previousReferences, quickdialNumber) => {
+  const mapping = v2MessageMapping[severity]
+  // Test message fields updated for message V2
+  Code.expect(message.identifier).to.equal(identifierV2)
+  Code.expect(message.status).to.equal(status)
+  Code.expect(message.code).to.equal(code)
+  if (references) {
+    Code.expect(message.references).to.equal(previousReferences ? `${referencesV2} ${referencesV2}` : referencesV2)
+  } else {
+    Code.expect(message.references).to.be.empty()
+  }
+  Code.expect(message.event).to.equal(`${mapping.description}: Rivers Lowther and Eamont`)
+  Code.expect(message.severity).to.equal(mapping.severity)
+  Code.expect(message.onset).to.equal(message.sent)
+  Code.expect(message.headline).to.equal(`${mapping.headline}: Rivers Lowther and Eamont`)
+  Code.expect(message.instruction).to.contain('https://check-for-flooding.service.gov.uk/target-area/TESTAREA1')
+  if (quickdialNumber) {
+    Code.expect(message.instruction).to.contain('- call Floodline on 0345 988 1188, using quickdial code 210010')
+    Code.expect(message.instruction).not.to.contain('- For access to flood warning information offline call Floodline on 0345 988 1188 using quickdial code: 210010.')
+  } else {
+    Code.expect(message.instruction).not.to.contain('- call Floodline on 0345 988 1188, using quickdial code 210010')
+    Code.expect(message.instruction).not.to.contain('- For access to flood warning information offline call Floodline on 0345 988 1188 using')
+  }
+}
+// ***********************************************************
 
 lab.experiment('processMessage', () => {
   lab.beforeEach(() => {
+    clock = sinon.useFakeTimers(new Date('2020-01-01T00:00:00Z').getTime())
     process.env = { ...ORIGINAL_ENV }
-    capAlert = require('./data/capAlert.json')
-    capUpdate = require('./data/capUpdate.json')
-
     // mock services
     service.putMessage = (query) => {
       return new Promise((resolve, reject) => {
@@ -37,127 +131,104 @@ lab.experiment('processMessage', () => {
   })
 
   lab.afterEach(() => {
+    clock.restore()
     sinon.restore()
   })
 
-  lab.test('Correct data test with no previous alert on test', async () => {
+  lab.test('Correct data test with no previous alert on test (empty array from db)', async () => {
     service.getLastMessage = (id) => Promise.resolve({
       rows: []
     })
 
+    let putQuery
     service.putMessage = (query) => Promise.resolve().then(() => {
-      Code.expect(query.values[2]).to.be.empty()
-      Code.expect(query.values[1]).to.equal('Alert')
+      putQuery = query
     })
 
-    const ret = await processMessage(capAlert)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
-    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
-    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
-    Code.expect(ret.body.status).to.equal('Test')
+    // do alert and test output xml
+    let response = await processMessage(nwsAlert)
+    expectResponse(response, putQuery, 'Minor')
+
+    // do warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
+    expectResponse(response, putQuery, 'Moderate')
+
+    // do severe warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
+    expectResponse(response, putQuery, 'Severe')
   })
 
-  lab.test('Correct data test with no previous alert on test 2', async () => {
-    service.getLastMessage = (id) => {
-      return new Promise((resolve, reject) => {
+  lab.test('Correct data test with no previous alert on test 2 (nothing resolved from db)', async () => {
+    service.getLastMessage = () => {
+      return new Promise((resolve) => {
         resolve()
       })
     }
-    service.putMessage = (query) => {
-      return new Promise((resolve, reject) => {
-        Code.expect(query.values[2]).to.be.empty()
-        Code.expect(query.values[1]).to.equal('Alert')
-        resolve()
-      })
-    }
-    const ret = await processMessage(capAlert)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
-    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
-    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
-    Code.expect(ret.body.status).to.equal('Test')
+    let putQuery
+    service.putMessage = (query) => Promise.resolve().then(() => {
+      putQuery = query
+    })
+    // do alert and test output xml
+    let response = await processMessage(nwsAlert)
+    expectResponse(response, putQuery, 'Minor')
+
+    // do warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
+    expectResponse(response, putQuery, 'Moderate')
+
+    // do severe warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
+    expectResponse(response, putQuery, 'Severe')
   })
 
-  lab.test('Correct data test with no previous alert on production', async () => {
+  lab.test('Correct data test with no previous alert on production, tests status switches to Actual', async () => {
     process.env.stage = 'prd'
+    let putQuery
+    service.putMessage = (query) => Promise.resolve().then(() => {
+      putQuery = query
+    })
 
-    service.putMessage = (query) => {
-      return new Promise((resolve, reject) => {
-        // Check that reference field is blank
-        Code.expect(query.values[2]).to.be.empty()
-        Code.expect(query.values[1]).to.equal('Alert')
-        resolve()
-      })
-    }
+    // do alert and test output xml
+    let response = await processMessage(nwsAlert)
+    expectResponse(response, putQuery, 'Minor', 'Actual')
 
-    const ret = await processMessage(capAlert)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
-    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
-    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
-    Code.expect(ret.body.status).to.not.equal('Test')
-    Code.expect(ret.body.status).to.equal('Actual')
+    // do warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
+    expectResponse(response, putQuery, 'Moderate', 'Actual')
+
+    // do severe warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
+    expectResponse(response, putQuery, 'Severe', 'Actual')
   })
 
   lab.test('Correct data test with active alert on test', async () => {
-    process.env.stage = 'prd'
-
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
         id: '51',
         identifier: '4eb3b7350ab7aa443650fc9351f2',
         expires: tomorrow,
-        sent: yesterday
+        sent: '2020-01-01T00:00:00Z',
+        identifier_v2: identifierV2
       }]
     })
 
-    service.putMessage = (query) => Promise.resolve().then(() => {
-      Code.expect(query.values[2]).to.not.be.empty()
-      Code.expect(query.values[2]).to.contain(yesterday.toISOString().substring(0, yesterday.toISOString().length - 5))
-      Code.expect(query.values[1]).to.equal('Update')
-    })
-
-    const ret = await processMessage(capAlert)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
-    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
-    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
-    Code.expect(ret.body.status).to.not.equal('Test')
-    Code.expect(ret.body.status).to.equal('Actual')
-  })
-
-  lab.test('Correct data test with active alert on test with prexisting references field', async () => {
-    process.env.stage = 'prd'
-
-    service.getLastMessage = (id) => Promise.resolve({
-      rows: [{
-        id: '51',
-        identifier: '4eb3b7350ab7aa443650fc9351f2',
-        expires: tomorrow,
-        sent: yesterday,
-        references: yesterday.toISOString()
-      }]
-    })
+    let putQuery
 
     service.putMessage = (query) => Promise.resolve().then(() => {
-      Code.expect(query.values[2]).to.not.be.empty()
-      Code.expect(query.values[2]).to.contain(yesterday.toISOString().substring(0, yesterday.toISOString().length - 5))
-      Code.expect(query.values[1]).to.equal('Update')
+      putQuery = query
     })
 
-    const ret = await processMessage(capAlert)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
-    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
-    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
-    Code.expect(ret.body.status).to.not.equal('Test')
-    Code.expect(ret.body.status).to.equal('Actual')
+    // do alert and test output xml
+    let response = await processMessage(nwsAlert)
+    expectResponse(response, putQuery, 'Minor', 'Test', 'Update', true)
+
+    // do warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
+    expectResponse(response, putQuery, 'Moderate', 'Test', 'Update', true)
+
+    // do severe warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
+    expectResponse(response, putQuery, 'Severe', 'Test', 'Update', true)
   })
 
   lab.test('Correct alert data test with an active on production', async () => {
@@ -167,57 +238,101 @@ lab.experiment('processMessage', () => {
       rows: [{
         id: '51',
         identifier: '4eb3b7350ab7aa443650fc9351f2',
-        sent: yesterday,
+        sent: '2020-01-01T00:00:00Z',
         expires: tomorrow,
-        msgType: 'Alert'
+        msgType: 'Alert',
+        identifier_v2: identifierV2
+      }]
+    })
+    let putQuery
+    service.putMessage = (query) => Promise.resolve().then(() => {
+      putQuery = query
+    })
+
+    // do alert and test output xml
+    let response = await processMessage(nwsAlert)
+    expectResponse(response, putQuery, 'Minor', 'Actual', 'Update', true)
+
+    // do warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
+    expectResponse(response, putQuery, 'Moderate', 'Actual', 'Update', true)
+
+    // do severe warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
+    expectResponse(response, putQuery, 'Severe', 'Actual', 'Update', true)
+  })
+
+  lab.test('Edge cases: Correct data test with active alert on test including references and no quickdial code', async () => {
+    service.getLastMessage = (id) => Promise.resolve({
+      rows: [{
+        id: '51',
+        identifier: '4eb3b7350ab7aa443650fc9351f2',
+        references: referencesV1,
+        expires: tomorrow,
+        sent: '2020-01-01T00:00:00Z',
+        identifier_v2: identifierV2,
+        references_v2: referencesV2
       }]
     })
 
+    let putQuery
+
     service.putMessage = (query) => Promise.resolve().then(() => {
-      Code.expect(query.values[2]).to.not.be.empty()
-      Code.expect(query.values[1]).to.equal('Update')
-      Code.expect(query.values[2]).to.contain(yesterday.toISOString().substring(0, yesterday.toISOString().length - 5))
+      putQuery = query
     })
 
-    const ret = await processMessage(capAlert)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
-    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
-    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
-    Code.expect(ret.body.status).to.not.equal('Test')
-    Code.expect(ret.body.status).to.equal('Actual')
+    // strip out quick dial code
+    const alert = { bodyXml: nwsAlert.bodyXml.replace('quickdial code: 210010.', '') }
+
+    // do alert and test output xml
+    let response = await processMessage(alert)
+    expectResponse(response, putQuery, 'Minor', 'Test', 'Update', true, true, false)
+
+    // do warning and test output xml
+    response = await processMessage({ bodyXml: alert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
+    expectResponse(response, putQuery, 'Moderate', 'Test', 'Update', true, true, false)
+
+    // do severe warning and test output xml
+    response = await processMessage({ bodyXml: alert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
+    expectResponse(response, putQuery, 'Severe', 'Test', 'Update', true, true, false)
   })
 
-  lab.test('Correct update data test with an active on production', async () => {
+  lab.test('Edge cases: Correct alert data test with an active on production including references and no quickdial code', async () => {
     process.env.stage = 'prd'
 
     service.getLastMessage = (id) => Promise.resolve({
       rows: [{
         id: '51',
         identifier: '4eb3b7350ab7aa443650fc9351f2',
-        sent: yesterday,
+        references: referencesV1,
+        sent: '2020-01-01T00:00:00Z',
         expires: tomorrow,
-        msgType: 'Alert'
+        msgType: 'Alert',
+        identifier_v2: identifierV2,
+        references_v2: referencesV2
       }]
     })
-
+    let putQuery
     service.putMessage = (query) => Promise.resolve().then(() => {
-      Code.expect(query.values[2]).to.not.be.empty()
-      Code.expect(query.values[1]).to.equal('Update')
-      Code.expect(query.values[2]).to.contain(yesterday.toISOString().substring(0, yesterday.toISOString().length - 5))
+      putQuery = query
     })
 
-    const ret = await processMessage(capUpdate)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
-    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
-    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
-    Code.expect(ret.body.status).to.not.equal('Test')
-    Code.expect(ret.body.status).to.equal('Actual')
+    // do alert and test output xml
+    let response = await processMessage(nwsAlert)
+    expectResponse(response, putQuery, 'Minor', 'Actual', 'Update', true, true)
+
+    // do warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
+    expectResponse(response, putQuery, 'Moderate', 'Actual', 'Update', true, true)
+
+    // do severe warning and test output xml
+    response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
+    expectResponse(response, putQuery, 'Severe', 'Actual', 'Update', true, true)
   })
 
+  // ***********************************************************
+  // Sad path tests
+  // ***********************************************************
   lab.test('Bad data test', async () => {
     sinon.stub(aws.email, 'publishMessage').callsFake((message) => {
       return new Promise((resolve, reject) => {
@@ -234,46 +349,15 @@ lab.experiment('processMessage', () => {
 
   lab.test('Database error', async () => {
     service.putMessage = (query) => Promise.reject(new Error('unit test error'))
-    const err = await Code.expect(processMessage(capAlert)).to.reject()
+    const err = await Code.expect(processMessage(nwsAlert)).to.reject()
     Code.expect(err.message).to.equal('unit test error')
   })
 
   lab.test('Database error 2', async () => {
     service.getLastMessage = (id) => Promise.reject(new Error('unit test error'))
 
-    const err = await Code.expect(processMessage(capAlert)).to.reject()
+    const err = await Code.expect(processMessage(nwsAlert)).to.reject()
     Code.expect(err.message).to.equal('unit test error')
-  })
-
-  lab.test('Correct data test for processMessage where previous message is active and has reference', async () => {
-    process.env.stage = 'prd'
-    // Replace the trivial promise with Promise.resolve
-    service.getLastMessage = (id) => Promise.resolve({
-      rows: [{
-        id: '51',
-        identifier: '4eb3b7350ab7aa443650fc9351f2',
-        expires: tomorrow,
-        sent: yesterday,
-        references: 'Previous_Active_Message'
-      }]
-    })
-
-    service.putMessage = (query) => Promise.resolve().then(() => {
-      const lastDate = moment(yesterday).utc().format('YYYY-MM-DDTHH:mm:ssZ')
-      Code.expect(query.values[2]).to.not.be.empty()
-      Code.expect(query.values[1]).to.equal('Update')
-      Code.expect(query.values[2]).to.contain(`Previous_Active_Message www.gov.uk/environment-agency,4eb3b7350ab7aa443650fc9351f2,${lastDate}`)
-      Code.expect(query.values[2]).to.not.contain('00:00+00:00')
-    })
-
-    const ret = await processMessage(capAlert)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTAREA1')
-    Code.expect(ret.body.sent).to.equal('2017-05-28T11:00:02-00:00')
-    Code.expect(ret.body.expires).to.equal('2017-05-29T11:00:02-00:00')
-    Code.expect(ret.body.status).to.not.equal('Test')
-    Code.expect(ret.body.status).to.equal('Actual')
   })
   lab.test('Invalid bodyXml format test', async () => {
     // Set bodyXml to an invalid value (e.g., null, undefined, or an object)
@@ -282,9 +366,10 @@ lab.experiment('processMessage', () => {
     // Expect the processMessage function to reject due to validation failure
     await Code.expect(processMessage({ bodyXml: invalidBodyXml })).to.reject()
   })
-  lab.test('Valid bodyXml format test', async () => {
-    const validBodyXml = capAlert.bodyXml
-
-    await Code.expect(processMessage({ bodyXml: validBodyXml })).to.not.reject()
+  lab.test('Handles xml2js error', async () => {
+    sinon.stub(xml2js, 'parseString').callsFake((xml, callback) => {
+      callback(new Error('xml2js parse error'))
+    })
+    await Code.expect(processMessage(nwsAlert)).to.reject()
   })
 })

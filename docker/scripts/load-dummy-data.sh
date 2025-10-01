@@ -7,7 +7,7 @@ set -e
 # Constants
 BASE_GUID="4eb3b7350ab7aa443650fc9351f02940E"
 BASE_AREA="TESTAREA"
-DATA_FILE="capAlert.json"
+DATA_FILE="test/lib/functions/data/nws-alert.xml"
 LAMBDA_URL=http://$(awslocal apigateway get-rest-apis | jq -r ".items[0].id").execute-api.localhost.localstack.cloud:4566/local/message
 
 # Loop 10 times

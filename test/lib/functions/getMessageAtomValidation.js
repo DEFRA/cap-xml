@@ -8,9 +8,9 @@ const Proxyquire = require('proxyquire').noCallThru()
 
 // Mock the service.getAllMessages function for validation experiment and tests
 const loadHandlerWithValidateMock = (validateMock) => {
-  return Proxyquire('../../../lib/functions/getMessagesAtom', {
+  return Proxyquire('../../../lib/helpers/messages', {
     'xmllint-wasm': { validateXML: validateMock }
-  }).getMessagesAtom
+  }).messages
 }
 
 lab.experiment('getMessagesAtom validation logging', () => {
