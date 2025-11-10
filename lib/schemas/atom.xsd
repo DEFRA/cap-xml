@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://www.w3.org/2005/Atom"
+    xmlns="http://www.w3.org/2005/Atom"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified">
+
+    <xs:element name="feed">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="id" type="xs:anyURI"/>
+                <xs:element name="title" type="xs:string"/>
+                <xs:element name="updated" type="xs:dateTime"/>
+                <xs:element name="generator" type="xs:string" minOccurs="0"/>
+                <xs:element name="author" type="PersonType"/>
+                <xs:element name="link" type="LinkType" maxOccurs="unbounded"/>
+                <xs:element name="subtitle" type="xs:string" minOccurs="0"/>
+                <xs:element name="rights" type="xs:string" minOccurs="0"/>
+                <xs:element name="entry" type="EntryType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="PersonType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="email" type="xs:string" minOccurs="0"/>
+            <xs:element name="uri" type="xs:anyURI" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="LinkType">
+        <xs:attribute name="href" type="xs:anyURI" use="required"/>
+        <xs:attribute name="rel" type="xs:string" use="optional"/>
+        <xs:attribute name="type" type="xs:string" use="optional"/>
+        <xs:attribute name="hreflang" type="xs:string" use="optional"/>
+        <xs:attribute name="title" type="xs:string" use="optional"/>
+        <xs:attribute name="length" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="EntryType">
+        <xs:sequence>
+            <xs:element name="title" type="TitleType"/>
+            <xs:element name="id" type="xs:anyURI"/>
+            <xs:element name="link" type="LinkType"/>
+            <xs:element name="updated" type="xs:dateTime"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="TitleType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="type" type="xs:string" use="optional"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+</xs:schema>

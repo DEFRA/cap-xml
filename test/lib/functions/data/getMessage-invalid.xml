@@ -1,0 +1,25 @@
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>4eb3b7350ab7aa443650fc9351f02940E10</identifier>
+  <sender>www.gov.uk/environment-agency</sender>
+  <sent>2026-05-28T11:00:02-00:00</sent>
+  <status>Test</status>
+  <msgType>Update</msgType>
+  <source>Flood warning service</source>
+  <scope>Public</scope>
+  <references>www.gov.uk/environment-agency,4eb3b7350ab7aa443650fc9351f02940E10,2026-05-28T11:00:02+00:00 www.gov.uk/environment-agency,4eb3b7350ab7aa443650fc9351f02940E10,2026-05-28T11:00:02+00:00</references>
+  <info>
+    <language>en-GB</language>
+    <category>Met</category>
+    <event>064 Issue Flood Alert EA</event>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <expires>2026-05-29T11:00:02-00:00</expires>
+    <area>
+      <geocode>
+        <valueName>TargetAreaCode</valueName>
+        <value>TESTAREA10</value>
+      </geocode>
+    </area>
+  </info>
+</alert>

@@ -3,8 +3,8 @@
 const Lab = require('@hapi/lab')
 const lab = exports.lab = Lab.script()
 const Code = require('@hapi/code')
-const getMessagesAtom = require('../lib/functions/getMessagesAtom').getMessagesAtom
-const service = require('../lib/helpers/service')
+const getMessagesAtom = require('../../../lib/functions/getMessagesAtom').getMessagesAtom
+const service = require('../../../lib/helpers/service')
 
 lab.experiment('getMessagesAtom', () => {
   lab.beforeEach(() => {

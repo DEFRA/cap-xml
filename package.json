@@ -1,6 +1,6 @@
 {
   "name": "cap-xml",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "CAP XML service",
   "engines": {
     "node": ">=20"
@@ -9,24 +9,28 @@
   "scripts": {
     "deploy": "npm run validate-config && sls deploy --verbose --force",
     "lint": "standard",
-    "unit-test": "lab test -v -c --coverage-exclude lib/helpers -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
-    "test-config": "bin/create-test-config",
+    "unit-test": "lab test -v -c -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
     "test": "npm run lint && npm run unit-test",
     "validate-config": "node ./config/index.js"
   },
   "author": "The Environment Agency",
   "license": "OGL",
   "dependencies": {
-    "feed": "4.2.2",
-    "joi": "^17.13.3",
+    "@aws-sdk/client-sns": "^3.873.0",
+    "feed": "5.1.0",
+    "joi": "^18.0.1",
     "moment": "^2.30.1",
-    "pg": "8.13.0",
+    "pg": "8.16.3",
     "sql-ts": "7.1.0",
-    "xml2js": "0.6.2"
+    "xml2js": "0.6.2",
+    "xmllint-wasm": "^5.0.0"
   },
   "devDependencies": {
     "@hapi/code": "^9.0.3",
-    "@hapi/lab": "^25.3.1",
+    "@hapi/lab": "^26.0.0",
+    "aws-sdk-client-mock": "^4.1.0",
+    "proxyquire": "^2.1.3",
+    "sinon": "^21.0.0",
     "standard": "17.1.2"
   }
 }
