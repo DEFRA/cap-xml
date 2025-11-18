@@ -4,7 +4,7 @@
 
 set -e
 
-if [ `whoami` != root ]; then
+if [ $(whoami) != root ]; then
   echo This script must be run as root
   exit 1
 fi
@@ -13,7 +13,7 @@ HOST_UID=$(id -u "$CAP_XML_HOST_USERNAME")
 DOCKER_SOCKET=/var/run/docker.sock
 ROOTLESS_DOCKER_SOCKET=/run/user/$HOST_UID/docker.sock
 
-if [ ! -d "$LOCAL_CAP_XML_DIR"/.git ] && [ x`echo $"$LOCAL_CAP_XML_DIR" | grep -E /cap-xml/?$` = "x" ]; then
+if [ ! -d "$LOCAL_CAP_XML_DIR"/.git ] && [ x$(echo $"$LOCAL_CAP_XML_DIR" | grep -E /cap-xml/?$) = "x" ]; then
  echo LOCAL_CAP_XML_DIR must be set to the absolute path of the root of a local cap-xml repository
  exit 1
 fi
