@@ -87,6 +87,8 @@ const expectMessageV1 = (message, severity, status, references, previousReferenc
 }
 
 const expectMessageV2 = (message, severity, status, references, previousReferences, quickdialNumber) => {
+  const normalize = s => s.replace(/\r\n/g, '\n')
+  const messageString = normalize(message.toString())
   const mapping = v2MessageMapping[severity]
   // Test message fields updated for message V2
   Code.expect(message.identifier).to.equal(identifierV2)
@@ -109,6 +111,27 @@ const expectMessageV2 = (message, severity, status, references, previousReferenc
     Code.expect(message.instruction).not.to.contain('- call Floodline on 0345 988 1188, using quickdial code 210010')
     Code.expect(message.instruction).not.to.contain('- For access to flood warning information offline call Floodline on 0345 988 1188 using')
   }
+  // Test for parameters
+  Code.expect(messageString).to.contain(`<parameter>
+      <valueName>awareness_level</valueName>
+      <value>${mapping.awarenessLevel}</value>
+    </parameter>`)
+  Code.expect(messageString).to.contain(`<parameter>
+      <valueName>awareness_type</valueName>
+      <value>12; Flooding</value>
+    </parameter>`)
+  Code.expect(messageString).to.contain(`<parameter>
+      <valueName>impacts</valueName>
+      <value>${mapping.headline}: Rivers Lowther and Eamont</value>
+    </parameter>`)
+  Code.expect(messageString).to.contain(`<parameter>
+      <valueName>use_polygon_over_geocode</valueName>
+      <value>true</value>
+    </parameter>`)
+  Code.expect(messageString).to.contain(`<parameter>
+      <valueName>uk_ea_ta_code</valueName>
+      <value>TESTAREA1</value>
+    </parameter>`)
 }
 // ***********************************************************
 
