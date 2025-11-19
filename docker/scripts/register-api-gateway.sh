@@ -11,7 +11,6 @@ main() {
   cap_xml_rest_api_root_resource_id=$(awslocal apigateway get-resources --rest-api-id $cap_xml_rest_api_id | jq -r '.items[0].id')
   lambda_functions_dir="lib/functions"
 
-  #for lambda_function in "$lambda_functions_dir"/*; do
   find "$lambda_functions_dir" -type f -name "*.js" | while read -r lambda_function; do
     relative_path="${lambda_function#$lambda_functions_dir/}"
     dir_prefix=$(dirname "$relative_path")
