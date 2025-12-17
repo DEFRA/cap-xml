@@ -122,7 +122,7 @@ const expectMessageV2 = (message, severity, status, references, previousReferenc
     </parameter>`)
   Code.expect(messageString).to.contain(`<parameter>
       <valueName>impacts</valueName>
-      <value>${mapping.headline}: Rivers Lowther and Eamont</value>
+      <value>${mapping.impact}</value>
     </parameter>`)
   Code.expect(messageString).to.contain(`<parameter>
       <valueName>use_polygon_over_geocode</valueName>
