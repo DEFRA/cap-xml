@@ -24,7 +24,7 @@ This project provides CAP XML services through the use of AWS Lambda.
 
 ## Installing
 
-`npm install`
+`npm ci --ignore-scripts`
 
 ## Running Unit Tests
 
