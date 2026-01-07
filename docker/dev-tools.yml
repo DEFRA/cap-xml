@@ -27,7 +27,7 @@ services:
       - capxmlliquibase:/capxmldb
     networks:
       ls:
-    command: update
+    command: /bin/sh -c "lpm add postgresql && liquibase update"
 volumes:
   capxmlpgadmin:
     external: true

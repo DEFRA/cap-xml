@@ -4,13 +4,13 @@ set -e
 
 # The macOS version of realpath does not support the -m switch so the GNU version
 # is needed.
-if [ `uname` = "Darwin" ] && [ x`command -v grealpath` = "x" ]; then
+if [ $(uname) = "Darwin" ] && [ x$(command -v grealpath) = "x" ]; then
   echo "GNU coreutils need to be installed to use realpath with the -m switch"
   exit 1
 fi
 
 # If running on macOS use the GNU version of realpath.
-if [ `uname` = "Darwin" ]; then
+if [ $(uname) = "Darwin" ]; then
   alias realpath="grealpath"
 fi
 
@@ -74,7 +74,7 @@ fi
 docker container create --name capxmlpgbootstraptemp -v capxmlpgbootstrap:/docker-entrypoint-initdb.d -v capxmlpgtmp:/tmp alpine
 echo Created capxmlpgbootstraptemp container
 docker cp ${CAP_XML_HOST_DIR}/docker/cap-xml-db/bootstrap-cap-xml-db.sh capxmlpgbootstraptemp:/docker-entrypoint-initdb.d/bootstrap-cap-xml-db.sh
-(cd `realpath -m  ${CAP_XML_HOST_DIR}`/../cap-xml-db && docker cp ./cx/0.0.1/setup.sql capxmlpgbootstraptemp:/tmp/setup.sql)
+(cd $(realpath -m  ${CAP_XML_HOST_DIR})/../cap-xml-db && docker cp ./cx/0.0.1/setup.sql capxmlpgbootstraptemp:/tmp/setup.sql)
 docker rm capxmlpgbootstraptemp
 echo Removed capxmlpgbootstraptemp container
 
@@ -90,6 +90,6 @@ fi
 # https://stackoverflow.com/questions/37468788/what-is-the-right-way-to-add-data-to-an-existing-named-volume-in-docker
 docker container create --name capxmlliquibasetemp -v capxmlliquibase:/capxmldb alpine
 echo Created capxmlliquibasetemp container
-(cd `realpath -m ${CAP_XML_HOST_DIR}`/../cap-xml-db/cx && docker cp . capxmlliquibasetemp:/capxmldb)
+(cd $(realpath -m ${CAP_XML_HOST_DIR})/../cap-xml-db/cx && docker cp . capxmlliquibasetemp:/capxmldb)
 docker rm capxmlliquibasetemp
 echo Removed capxmlliquibasetemp container

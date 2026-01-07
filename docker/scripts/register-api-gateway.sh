@@ -11,16 +11,27 @@ main() {
   cap_xml_rest_api_root_resource_id=$(awslocal apigateway get-resources --rest-api-id $cap_xml_rest_api_id | jq -r '.items[0].id')
   lambda_functions_dir="lib/functions"
 
-  for lambda_function in "$lambda_functions_dir"/*; do
+  find "$lambda_functions_dir" -type f -name "*.js" | while read -r lambda_function; do
+    relative_path="${lambda_function#$lambda_functions_dir/}"
+    dir_prefix=$(dirname "$relative_path")
     lambda_function_name=$(basename "$lambda_function" .js)
     http_method=$(get_http_method $lambda_function_name)
+    
+    case "$dir_prefix" in
+      v[0-9]*)
+        lambda_function_name="${lambda_function_name}_${dir_prefix}"
+        ;;
+      *)
+        echo "No version prefix"
+        ;;
+    esac
 
     if [ $lambda_function_name = "archiveMessages" ]; then
       echo Skipping $lambda_function because it is not accessed through an API Gateway
       continue
     fi
-
-    # Convert the Lambda function name from camel case to undersore case to call the correct API gateway registration function. 
+    
+    # Convert the Lambda function name from camel case to undersore case to call the correct API gateway registration function.
     $(echo register_api_gateway_support_for_$lambda_function_name | sed -E "s/([a-z0-9])([A-Z])/\1_\2/g; s/([A-Z])([A-Z][a-z])/\1_\2/g" | tr "[:upper:]" "[:lower:]")
     echo "API Gateway support added for $lambda_function_name"
 
@@ -47,9 +58,28 @@ register_api_gateway_support_for_get_message() {
   put_method_and_integration $message_resource_id
 }
 
+register_api_gateway_support_for_get_message_v2() {
+  if [ -z "$v2_resource_id" ]; then
+    v2_resource_id=$(create_resource "$cap_xml_rest_api_root_resource_id" "v2")
+  fi
+  get_message_v2_resource_id=$(create_resource $v2_resource_id  "message")
+  message_v2_resource_id=$(create_resource $get_message_v2_resource_id  "{id}")
+  put_method_and_integration $message_v2_resource_id
+  return 0
+}
+
 register_api_gateway_support_for_get_messages_atom() {
   get_messages_atom_resource_id=$(create_resource $cap_xml_rest_api_root_resource_id  "messages.atom")
   put_method_and_integration $get_messages_atom_resource_id
+}
+
+register_api_gateway_support_for_get_messages_atom_v2() {
+  if [ -z "$v2_resource_id" ]; then
+    v2_resource_id=$(create_resource "$cap_xml_rest_api_root_resource_id" "v2")
+  fi
+  get_messages_atom_v2_resource_id=$(create_resource $v2_resource_id  "messages.atom")
+  put_method_and_integration $get_messages_atom_v2_resource_id
+  return 0
 }
 
 register_api_gateway_support_for_process_message() {
@@ -90,7 +120,7 @@ put_integration() {
   # by a function. This results in some duplication.
 
   case $lambda_function_name in
-    getMessage)
+    getMessage|getMessage_v2)
       awslocal apigateway put-integration \
         --rest-api-id $cap_xml_rest_api_id \
         --resource-id $resource_id \
@@ -104,7 +134,7 @@ put_integration() {
 
       put_responses_for_get_message
       ;;
-    getMessagesAtom)
+    getMessagesAtom|getMessagesAtom_v2)
       awslocal apigateway put-integration \
         --rest-api-id $cap_xml_rest_api_id \
         --resource-id $resource_id \
@@ -127,7 +157,11 @@ put_integration() {
         --uri arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:000000000000:function:$lambda_function_name/invocations \
         --passthrough-behavior WHEN_NO_TEMPLATES \
         --content-handling CONVERT_TO_TEXT \
-        --request-templates '{"text/html": "{\"bodyXml\": $input.json(\"$.message\")}", "text/xml": "{\"bodyXml\": $input.json(\"$.message\")}"}'
+        --request-templates '{
+            "text/html": "{\"bodyXml\": \"$util.escapeJavaScript($input.body)\"}",
+            "text/xml": "{\"bodyXml\": \"$util.escapeJavaScript($input.body)\"}"
+          }'
+
 
       put_responses_for_process_message
       ;;

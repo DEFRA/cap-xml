@@ -17,18 +17,33 @@ set -- $cpx_db_username $cpx_db_password $cpx_db_name $cpx_db_host $cpx_agw_url
 custom_environment_variables=$(printf '%s,' "$@" | sed 's/,*$//g')
 
 # Iterate over each file in lambda_functions_dir
-for lambda_function in "$lambda_functions_dir"/*; do
+find "$lambda_functions_dir" -type f -name "*.js" | while read -r lambda_function; do
   if [ -f "$lambda_function" ]; then
+      relative_path="${lambda_function#$lambda_functions_dir/}"
+      dir_prefix=$(dirname "$relative_path")
       function_name=$(basename "$lambda_function" .js)
+      handler_path="lib/functions/$function_name.$function_name"  # default
+
+      # If the directory matches v{number}, update function name and handler path
+      case "$dir_prefix" in
+        v[0-9]*)
+          handler_path="lib/functions/$dir_prefix/$function_name.$function_name"
+          function_name="${function_name}_${dir_prefix}"
+          ;;
+        *)
+          echo "No version prefix"
+          ;;
+      esac
+
       echo Registering $function_name with LocalStack
 
       awslocal lambda create-function \
         --function-name "$function_name" \
         --code S3Bucket="hot-reload",S3Key="$(pwd)/" \
-        --runtime nodejs20.x \
+        --runtime nodejs${NODEJS_VERSION}.x \
         --timeout $LAMBDA_TIMEOUT \
         --role arn:aws:iam::000000000000:role/lambda-role \
-        --handler lib/functions/$function_name.$function_name \
+        --handler "$handler_path" \
         --environment "Variables={$custom_environment_variables}" \
         --no-cli-pager
       sleep 1
