@@ -39,6 +39,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  cap-xml-redis:
+    container_name: cap-xml-redis
+    image: redis:8.4-alpine
+    ports:
+      - "6379:6379"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      ls:
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 volumes:
   capxmlpgdata:
     external: true

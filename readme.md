@@ -17,6 +17,7 @@ This project provides CAP XML services through the use of AWS Lambda.
 | CPX_DB_NAME        | Database name         |    yes   |                       |       |
 | CPX_DB_HOST        | Database host         |    yes   |                       |       |
 | CPX_AGW_URL        | API Gateway URL       |    yes   |                       |       |
+| CPX_REDIS_HOST     | Redis/Elasticache host|    no    |       localhost       |       |
 
 ## Prerequisites
 

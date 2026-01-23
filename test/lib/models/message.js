@@ -197,10 +197,11 @@ lab.experiment('Message class', () => {
     Code.expect(xmlOut).to.include('<identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>')
   })
 
-  lab.test('putQuery generates SQL insert with correct values', () => {
-    const sql = message.putQuery(message, messageV2)
+  lab.test('putQuery generates message for redis and SQL insert with correct values', () => {
+    const { message: redisMessage, query: sql } = message.putQuery(message, messageV2)
+
+    // Verify SQL query
     Code.expect(sql.text).to.equal('INSERT INTO "messages" ("identifier", "msg_type", "references", "alert", "fwis_code", "expires", "sent", "created", "identifier_v2", "references_v2", "alert_v2") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)')
-    // TODO need to test for more values and v2 values here
     Code.expect(sql.values[0]).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(sql.values[1]).to.equal('Alert')
     Code.expect(sql.values[2]).to.be.empty()
@@ -212,6 +213,16 @@ lab.experiment('Message class', () => {
     Code.expect(sql.values[8]).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
     Code.expect(sql.values[9]).to.be.empty()
     Code.expect(sql.values[10]).to.not.be.empty()
+
+    // Verify redis message object
+    Code.expect(redisMessage).to.be.an.object()
+    Code.expect(redisMessage.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(redisMessage.alert).to.not.be.empty()
+    Code.expect(redisMessage.alert_v2).to.not.be.empty()
+    Code.expect(redisMessage.alert).to.be.a.string()
+    Code.expect(redisMessage.alert_v2).to.be.a.string()
+    Code.expect(redisMessage.alert).to.include('<identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>')
+    Code.expect(redisMessage.alert_v2).to.include('<identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>')
   })
 
   lab.test('blank message results in blank fields', () => {

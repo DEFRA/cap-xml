@@ -16,13 +16,15 @@ const fakeService = {
 
 const fakeSchema = { validateAsync: async () => ({ error: null }) }
 const fakeAws = { email: { publishMessage: sinon.stub() } }
+const fakeRedis = { set: sinon.stub().resolves('OK') }
 
 const loadWithValidateMock = (validateMock) => {
   return Proxyquire('../../../lib/functions/processMessage', {
     'xmllint-wasm': { validateXML: validateMock },
     '../helpers/service': fakeService,
     '../schemas/processMessageEventSchema': fakeSchema,
-    '../helpers/aws': fakeAws
+    '../helpers/aws': fakeAws,
+    '../helpers/redis': fakeRedis
   }).processMessage
 }
 
@@ -74,10 +76,12 @@ lab.experiment('processMessage validation logging', () => {
   lab.test('Processes a message correctly if valid with actual xmllint', async () => {
     process.env.CPX_SNS_TOPIC = true
     const awsStub = { email: { publishMessage: sinon.stub() } }
+    const redisStub = { set: sinon.stub().resolves('OK') }
     const processMessage = Proxyquire('../../../lib/functions/processMessage', {
       '../helpers/service': fakeService,
       '../schemas/processMessageEventSchema': fakeSchema,
-      '../helpers/aws': awsStub
+      '../helpers/aws': awsStub,
+      '../helpers/redis': redisStub
     }).processMessage
 
     const ret = await processMessage(nwsAlert)
@@ -89,6 +93,15 @@ lab.experiment('processMessage validation logging', () => {
     Code.expect(ret.body.status).to.equal('Test')
 
     Code.expect(awsStub.email.publishMessage.callCount).to.equal(0)
+
+    // Verify redis.set was called correctly
+    Code.expect(redisStub.set.calledOnce).to.be.true()
+    const [key, value] = redisStub.set.firstCall.args
+    Code.expect(key).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(value).to.be.an.object()
+    Code.expect(value.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
+    Code.expect(value.alert).to.not.be.empty()
+    Code.expect(value.alert_v2).to.not.be.empty()
   })
 
   lab.test('Throws validation errors for empty fields', async () => {

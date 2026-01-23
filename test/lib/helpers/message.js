@@ -8,6 +8,7 @@ const fs = require('fs')
 const path = require('path')
 const { getMessage } = require('../../../lib/helpers/message')
 const service = require('../../../lib/helpers/service')
+const redis = require('../../../lib/helpers/redis')
 const getMessageXmlInvalid = fs.readFileSync(path.join(__dirname, '..', 'functions', 'data', 'getMessage-invalid.xml'), 'utf8')
 const getMessageXmlValid = fs.readFileSync(path.join(__dirname, '..', 'functions', 'data', 'getMessage-valid.xml'), 'utf8')
 let event
@@ -19,6 +20,13 @@ lab.experiment('getMessage helper', () => {
         id: '4eb3b7350ab7aa443650fc9351f'
       }
     }
+    // Mock redis by default to return null (cache miss)
+    sinon.stub(redis, 'get').resolves(null)
+    sinon.stub(redis, 'set').resolves('OK')
+  })
+
+  lab.afterEach(() => {
+    sinon.restore()
   })
 
   lab.experiment('getMessage v1 (v2=false)', () => {
@@ -330,6 +338,118 @@ lab.experiment('getMessage helper', () => {
       } finally {
         consoleLogStub.restore()
       }
+    })
+  })
+
+  lab.experiment('Redis caching behavior', () => {
+    const mockMessage = {
+      alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">cached v1</alert>',
+      alert_v2: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">cached v2</alert>'
+    }
+
+    lab.test('Uses cached message from redis when available (v1)', async () => {
+      redis.get.resolves(mockMessage)
+      const serviceStub = sinon.stub(service, 'getMessage')
+
+      const ret = await getMessage(event, false)
+
+      Code.expect(redis.get.calledOnce).to.be.true()
+      Code.expect(redis.get.calledWith('4eb3b7350ab7aa443650fc9351f')).to.be.true()
+      Code.expect(serviceStub.called).to.be.false()
+      Code.expect(redis.set.called).to.be.false()
+      Code.expect(ret.body).to.equal('<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">cached v1</alert>')
+    })
+
+    lab.test('Uses cached message from redis when available (v2)', async () => {
+      redis.get.resolves(mockMessage)
+      const serviceStub = sinon.stub(service, 'getMessage')
+
+      const ret = await getMessage(event, true)
+
+      Code.expect(redis.get.calledOnce).to.be.true()
+      Code.expect(redis.get.calledWith('4eb3b7350ab7aa443650fc9351f')).to.be.true()
+      Code.expect(serviceStub.called).to.be.false()
+      Code.expect(redis.set.called).to.be.false()
+      Code.expect(ret.body).to.equal('<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">cached v2</alert>')
+    })
+
+    lab.test('Fetches from database and caches in redis on cache miss', async () => {
+      redis.get.resolves(null)
+      service.getMessage = () => Promise.resolve({
+        rows: [{
+          getmessage: {
+            alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">db v1</alert>',
+            alert_v2: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">db v2</alert>'
+          }
+        }]
+      })
+
+      const ret = await getMessage(event, false)
+
+      Code.expect(redis.get.calledOnce).to.be.true()
+      Code.expect(redis.get.calledWith('4eb3b7350ab7aa443650fc9351f')).to.be.true()
+      Code.expect(redis.set.calledOnce).to.be.true()
+      const [key, value] = redis.set.firstCall.args
+      Code.expect(key).to.equal('4eb3b7350ab7aa443650fc9351f')
+      Code.expect(value).to.equal({
+        alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">db v1</alert>',
+        alert_v2: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">db v2</alert>'
+      })
+      Code.expect(ret.body).to.equal('<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">db v1</alert>')
+    })
+
+    lab.test('Caches entire message object with both alert versions', async () => {
+      redis.get.resolves(null)
+      const dbMessage = {
+        alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">full v1</alert>',
+        alert_v2: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">full v2</alert>',
+        extraField: 'should be cached too'
+      }
+      service.getMessage = () => Promise.resolve({
+        rows: [{ getmessage: dbMessage }]
+      })
+
+      await getMessage(event, true)
+
+      Code.expect(redis.set.calledOnce).to.be.true()
+      const [key, cachedValue] = redis.set.firstCall.args
+      Code.expect(key).to.equal('4eb3b7350ab7aa443650fc9351f')
+      Code.expect(cachedValue).to.equal(dbMessage)
+    })
+
+    lab.test('Does not cache when database returns no results', async () => {
+      redis.get.resolves(null)
+      service.getMessage = () => Promise.resolve({ rows: [] })
+
+      try {
+        await getMessage(event, false)
+      } catch (err) {
+        Code.expect(redis.set.called).to.be.false()
+        Code.expect(err.message).to.equal('No message found')
+      }
+    })
+
+    lab.test('Does not cache when database throws error', async () => {
+      redis.get.resolves(null)
+      service.getMessage = () => Promise.reject(new Error('DB error'))
+
+      try {
+        await getMessage(event, false)
+      } catch (err) {
+        Code.expect(redis.set.called).to.be.false()
+        Code.expect(err.message).to.equal('DB error')
+      }
+    })
+
+    lab.test('Uses correct cache key from event pathParameters', async () => {
+      event.pathParameters.id = 'abc123def456'
+      redis.get.resolves(mockMessage)
+      const serviceStub = sinon.stub(service, 'getMessage')
+
+      await getMessage(event, false)
+
+      Code.expect(redis.get.calledWith('abc123def456')).to.be.true()
+      Code.expect(serviceStub.called).to.be.false()
     })
   })
 })
