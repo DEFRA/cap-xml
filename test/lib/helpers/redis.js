@@ -51,7 +51,22 @@ lab.experiment('redis helper', () => {
     Code.expect(mockRedis.firstCall.args[0]).to.equal({
       host: 'mock-redis-host',
       port: '6379',
-      connectTimeout: 10000
+      connectTimeout: 10000,
+      tls: undefined
+    })
+  })
+
+  lab.test('get initializes redis client with correct config with tls', async () => {
+    mockRedisInstance.get.resolves(null)
+    process.env.CPX_REDIS_TLS = 'true'
+    await redis.get('test-key')
+
+    Code.expect(mockRedis.calledOnce).to.be.true()
+    Code.expect(mockRedis.firstCall.args[0]).to.equal({
+      host: 'mock-redis-host',
+      port: '6379',
+      connectTimeout: 10000,
+      tls: { checkServerIdentity: () => undefined }
     })
   })
 
