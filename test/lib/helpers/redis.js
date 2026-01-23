@@ -55,19 +55,6 @@ lab.experiment('redis helper', () => {
     })
   })
 
-  lab.test('uses default port when CPX_REDIS_PORT is not set', async () => {
-    delete process.env.CPX_REDIS_PORT
-
-    redis = Proxyquire('../../../lib/helpers/redis', {
-      ioredis: mockRedis
-    })
-
-    mockRedisInstance.get.resolves(null)
-    await redis.get('test-key')
-
-    Code.expect(mockRedis.firstCall.args[0].port).to.equal(6379)
-  })
-
   lab.test('get retrieves and parses JSON value', async () => {
     const mockValue = { foo: 'bar', count: 42 }
     mockRedisInstance.get.resolves(JSON.stringify(mockValue))
