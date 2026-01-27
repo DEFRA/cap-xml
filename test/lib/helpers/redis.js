@@ -50,6 +50,7 @@ lab.experiment('redis helper', () => {
     Code.expect(mockRedis.calledOnce).to.be.true()
     Code.expect(mockRedis.firstCall.args[0]).to.equal({
       host: 'mock-redis-host',
+      maxRetriesPerRequest: 3,
       port: '6379',
       connectTimeout: 10000,
       tls: undefined
@@ -64,6 +65,7 @@ lab.experiment('redis helper', () => {
     Code.expect(mockRedis.calledOnce).to.be.true()
     Code.expect(mockRedis.firstCall.args[0]).to.equal({
       host: 'mock-redis-host',
+      maxRetriesPerRequest: 3,
       port: '6379',
       connectTimeout: 10000,
       tls: { checkServerIdentity: () => undefined }
