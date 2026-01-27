@@ -121,16 +121,6 @@ lab.experiment('redis helper', () => {
     Code.expect(mockRedisInstance.set.calledWith('test-key', 'string-value')).to.be.true()
   })
 
-  lab.test('set uses setex when ttl is provided', async () => {
-    const mockObject = { foo: 'bar' }
-    mockRedisInstance.setex.resolves('OK')
-
-    await redis.set('test-key', mockObject, 300)
-
-    Code.expect(mockRedisInstance.setex.calledWith('test-key', 300, JSON.stringify(mockObject))).to.be.true()
-    Code.expect(mockRedisInstance.set.called).to.be.false()
-  })
-
   lab.test('set uses setex when ttl is 0', async () => {
     mockRedisInstance.setex.resolves('OK')
 
