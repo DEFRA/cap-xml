@@ -13,7 +13,10 @@ cpx_db_password=$(echo CPX_DB_PASSWORD=$CPX_DB_PASSWORD)
 cpx_db_name=$(echo CPX_DB_NAME=$CPX_DB_NAME)
 cpx_db_host=$(echo CPX_DB_HOST=$CPX_DB_HOST)
 cpx_agw_url=$(echo CPX_AGW_URL=$deployed_cpx_agw_url)
-set -- $cpx_db_username $cpx_db_password $cpx_db_name $cpx_db_host $cpx_agw_url
+cpx_redis_host=$(echo CPX_REDIS_HOST=$CPX_REDIS_HOST)
+cpx_redis_port=$(echo CPX_REDIS_PORT=$CPX_REDIS_PORT)
+cpx_redis_tls=$(echo CPX_REDIS_TLS=$CPX_REDIS_TLS)
+set -- $cpx_db_username $cpx_db_password $cpx_db_name $cpx_db_host $cpx_agw_url $cpx_redis_host $cpx_redis_port $cpx_redis_tls
 custom_environment_variables=$(printf '%s,' "$@" | sed 's/,*$//g')
 
 # Iterate over each file in lambda_functions_dir

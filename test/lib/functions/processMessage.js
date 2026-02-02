@@ -10,6 +10,7 @@ const xml2js = require('xml2js')
 const processMessage = require('../../../lib/functions/processMessage').processMessage
 const service = require('../../../lib/helpers/service')
 const aws = require('../../../lib/helpers/aws')
+const redis = require('../../../lib/helpers/redis')
 const Message = require('../../../lib/models/message')
 const v2MessageMapping = require('../../../lib/models/v2MessageMapping')
 const nwsAlert = { bodyXml: fs.readFileSync(path.join(__dirname, 'data', 'nws-alert.xml'), 'utf8') }
@@ -29,6 +30,17 @@ const expectResponse = (response, putQuery, severity = 'Minor', status = 'Test',
   expectResponseAndPutQuery(response, putQuery, status, msgType, references, previousReferences)
   expectMessageV1(new Message(putQuery.values[3]), severity, status, references, previousReferences, quickdialNumber)
   expectMessageV2(new Message(putQuery.values[10]), severity, status, references, previousReferences, quickdialNumber)
+  expectRedisSet(identifier)
+}
+
+const expectRedisSet = (identifier) => {
+  Code.expect(redis.set.calledOnce).to.be.true()
+  const [key, value] = redis.set.firstCall.args
+  Code.expect(key).to.equal(identifier)
+  Code.expect(value).to.be.an.object()
+  Code.expect(value.identifier).to.equal(identifier)
+  Code.expect(value.alert).to.not.be.empty()
+  Code.expect(value.alert_v2).to.not.be.empty()
 }
 
 const expectResponseAndPutQuery = (response, putQuery, status, msgType, references, previousReferences) => {
@@ -151,6 +163,8 @@ lab.experiment('processMessage', () => {
         identifier: '4eb3b7350ab7aa443650fc9351f2'
       }]
     })
+    // mock redis
+    sinon.stub(redis, 'set').resolves('OK')
   })
 
   lab.afterEach(() => {
@@ -169,14 +183,17 @@ lab.experiment('processMessage', () => {
     })
 
     // do alert and test output xml
+    redis.set.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor')
 
     // do warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate')
 
     // do severe warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe')
   })
@@ -192,14 +209,17 @@ lab.experiment('processMessage', () => {
       putQuery = query
     })
     // do alert and test output xml
+    redis.set.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor')
 
     // do warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate')
 
     // do severe warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe')
   })
@@ -212,14 +232,17 @@ lab.experiment('processMessage', () => {
     })
 
     // do alert and test output xml
+    redis.set.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor', 'Actual')
 
     // do warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Actual')
 
     // do severe warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Actual')
   })
@@ -242,14 +265,17 @@ lab.experiment('processMessage', () => {
     })
 
     // do alert and test output xml
+    redis.set.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor', 'Test', 'Update', true)
 
     // do warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Test', 'Update', true)
 
     // do severe warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Test', 'Update', true)
   })
@@ -273,14 +299,17 @@ lab.experiment('processMessage', () => {
     })
 
     // do alert and test output xml
+    redis.set.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor', 'Actual', 'Update', true)
 
     // do warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Actual', 'Update', true)
 
     // do severe warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Actual', 'Update', true)
   })
@@ -308,14 +337,17 @@ lab.experiment('processMessage', () => {
     const alert = { bodyXml: nwsAlert.bodyXml.replace('quickdial code: 210010.', '') }
 
     // do alert and test output xml
+    redis.set.resetHistory()
     let response = await processMessage(alert)
     expectResponse(response, putQuery, 'Minor', 'Test', 'Update', true, true, false)
 
     // do warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: alert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Test', 'Update', true, true, false)
 
     // do severe warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: alert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Test', 'Update', true, true, false)
   })
@@ -341,14 +373,17 @@ lab.experiment('processMessage', () => {
     })
 
     // do alert and test output xml
+    redis.set.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor', 'Actual', 'Update', true, true)
 
     // do warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Actual', 'Update', true, true)
 
     // do severe warning and test output xml
+    redis.set.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Actual', 'Update', true, true)
   })
