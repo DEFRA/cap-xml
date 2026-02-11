@@ -11,6 +11,7 @@ const processMessage = require('../../../lib/functions/processMessage').processM
 const service = require('../../../lib/helpers/service')
 const aws = require('../../../lib/helpers/aws')
 const redis = require('../../../lib/helpers/redis')
+const meteoalarm = require('../../../lib/helpers/meteoalarm')
 const Message = require('../../../lib/models/message')
 const v2MessageMapping = require('../../../lib/models/v2MessageMapping')
 const nwsAlert = { bodyXml: fs.readFileSync(path.join(__dirname, 'data', 'nws-alert.xml'), 'utf8') }
@@ -18,10 +19,10 @@ const ORIGINAL_ENV = process.env
 let clock
 const tomorrow = new Date(new Date().getTime() + (24 * 60 * 60 * 1000))
 const identifier = '4eb3b7350ab7aa443650fc9351f02940E'
-const identifierV2 = `2.49.0.0.826.1.20251106080027.${identifier}`
+const identifierV2 = `2.49.0.1.826.1.20251106080027.${identifier}`
 const code = 'MCP:v2.0'
 const referencesV1 = 'www.gov.uk/environment-agency,4eb3b7350ab7aa443650fc9351f2,2020-01-01T00:00:00+00:00'
-const referencesV2 = 'www.gov.uk/environment-agency,2.49.0.0.826.1.20251106080027.4eb3b7350ab7aa443650fc9351f02940E,2020-01-01T00:00:00+00:00'
+const referencesV2 = 'www.gov.uk/environment-agency,2.49.0.1.826.1.20251106080027.4eb3b7350ab7aa443650fc9351f02940E,2020-01-01T00:00:00+00:00'
 
 // ***********************************************************
 // Helper functions
@@ -31,6 +32,7 @@ const expectResponse = (response, putQuery, severity = 'Minor', status = 'Test',
   expectMessageV1(new Message(putQuery.values[3]), severity, status, references, previousReferences, quickdialNumber)
   expectMessageV2(new Message(putQuery.values[10]), severity, status, references, previousReferences, quickdialNumber)
   expectRedisSet(identifier)
+  expectMeteoalarmPost(putQuery.values[10])
 }
 
 const expectRedisSet = (identifier) => {
@@ -41,6 +43,13 @@ const expectRedisSet = (identifier) => {
   Code.expect(value.identifier).to.equal(identifier)
   Code.expect(value.alert).to.not.be.empty()
   Code.expect(value.alert_v2).to.not.be.empty()
+}
+
+const expectMeteoalarmPost = (messageV2Xml) => {
+  Code.expect(meteoalarm.postWarning.calledOnce).to.be.true()
+  const [xmlMessage, messageIdentifier] = meteoalarm.postWarning.firstCall.args
+  Code.expect(xmlMessage).to.equal(messageV2Xml)
+  Code.expect(messageIdentifier).to.equal(identifier)
 }
 
 const expectResponseAndPutQuery = (response, putQuery, status, msgType, references, previousReferences) => {
@@ -165,6 +174,8 @@ lab.experiment('processMessage', () => {
     })
     // mock redis
     sinon.stub(redis, 'set').resolves('OK')
+    // mock meteoalarm
+    sinon.stub(meteoalarm, 'postWarning').resolves({ id: 'meteoalarm-warning-id' })
   })
 
   lab.afterEach(() => {
@@ -184,16 +195,19 @@ lab.experiment('processMessage', () => {
 
     // do alert and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor')
 
     // do warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate')
 
     // do severe warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe')
   })
@@ -210,16 +224,19 @@ lab.experiment('processMessage', () => {
     })
     // do alert and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor')
 
     // do warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate')
 
     // do severe warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe')
   })
@@ -233,16 +250,19 @@ lab.experiment('processMessage', () => {
 
     // do alert and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor', 'Actual')
 
     // do warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Actual')
 
     // do severe warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Actual')
   })
@@ -266,16 +286,19 @@ lab.experiment('processMessage', () => {
 
     // do alert and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor', 'Test', 'Update', true)
 
     // do warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Test', 'Update', true)
 
     // do severe warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Test', 'Update', true)
   })
@@ -300,16 +323,19 @@ lab.experiment('processMessage', () => {
 
     // do alert and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor', 'Actual', 'Update', true)
 
     // do warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Actual', 'Update', true)
 
     // do severe warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Actual', 'Update', true)
   })
@@ -338,16 +364,19 @@ lab.experiment('processMessage', () => {
 
     // do alert and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     let response = await processMessage(alert)
     expectResponse(response, putQuery, 'Minor', 'Test', 'Update', true, true, false)
 
     // do warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: alert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Test', 'Update', true, true, false)
 
     // do severe warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: alert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Test', 'Update', true, true, false)
   })
@@ -374,16 +403,19 @@ lab.experiment('processMessage', () => {
 
     // do alert and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     let response = await processMessage(nwsAlert)
     expectResponse(response, putQuery, 'Minor', 'Actual', 'Update', true, true)
 
     // do warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Moderate</severity>') })
     expectResponse(response, putQuery, 'Moderate', 'Actual', 'Update', true, true)
 
     // do severe warning and test output xml
     redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
     response = await processMessage({ bodyXml: nwsAlert.bodyXml.replace('<severity>Minor</severity>', '<severity>Severe</severity>') })
     expectResponse(response, putQuery, 'Severe', 'Actual', 'Update', true, true)
   })
@@ -429,5 +461,58 @@ lab.experiment('processMessage', () => {
       callback(new Error('xml2js parse error'))
     })
     await Code.expect(processMessage(nwsAlert)).to.reject()
+  })
+
+  lab.test('Throws error when pre/post validation has errors with no SNS message', async () => {
+    const consoleLogStub = sinon.stub(console, 'log')
+    const badAlert = { bodyXml: nwsAlert.bodyXml.replace('<identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>', '') }
+    await Code.expect(processMessage(badAlert)).to.reject()
+    Code.expect(consoleLogStub.calledWith(badAlert.bodyXml)).to.be.true()
+    consoleLogStub.restore()
+  })
+
+  lab.test('Throws error when pre/post validation has errors with SNS message sent', async () => {
+    sinon.stub(aws.email, 'publishMessage').resolves()
+    process.env.CPX_SNS_TOPIC = 'arn:aws:sns:region:account:topic'
+    const consoleLogStub = sinon.stub(console, 'log')
+    const badAlert = { bodyXml: nwsAlert.bodyXml.replace('<identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>', '') }
+    const err = await Code.expect(processMessage(badAlert)).to.reject()
+    Code.expect(err.message).to.contain('[500]')
+    Code.expect(aws.email.publishMessage.calledOnce).to.be.true()
+    Code.expect(consoleLogStub.calledWith(badAlert.bodyXml)).to.be.true()
+    consoleLogStub.restore()
+  })
+
+  lab.test('does not log when validator has no errors', async () => {
+    const consoleLogStub = sinon.stub(console, 'log')
+    service.putMessage = (query) => Promise.resolve()
+    const response = await processMessage(nwsAlert)
+    Code.expect(response.statusCode).to.equal(200)
+    // Check that the error logging for validation didn't occur
+    // (processMessage itself logs processing messages, so we check it doesn't log the bodyXml)
+    Code.expect(consoleLogStub.calledWith(nwsAlert.bodyXml)).to.be.false()
+    consoleLogStub.restore()
+  })
+
+  lab.test('Meteoalarm failure does not fail message processing', async () => {
+    const consoleErrorStub = sinon.stub(console, 'error')
+    meteoalarm.postWarning.rejects(new Error('Meteoalarm API unavailable'))
+
+    const putMessageStub = sinon.stub(service, 'putMessage').resolves()
+
+    const response = await processMessage(nwsAlert)
+
+    // Should still succeed
+    Code.expect(response.statusCode).to.equal(200)
+    Code.expect(response.body.identifier).to.equal(identifier)
+
+    // Should have logged the error
+    Code.expect(consoleErrorStub.calledWith('Failed to post to Meteoalarm: Meteoalarm API unavailable')).to.be.true()
+
+    // Should have still called the other services
+    Code.expect(putMessageStub.calledOnce).to.be.true()
+    Code.expect(redis.set.calledOnce).to.be.true()
+
+    consoleErrorStub.restore()
   })
 })

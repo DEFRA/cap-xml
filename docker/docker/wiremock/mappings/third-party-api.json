@@ -6,7 +6,7 @@
         "urlPath": "/warnings"
       },
       "response": {
-        "status": 200,
+        "status": 201,
         "body": "{\"warning\": {\"uuid\": \"{{randomValue type='UUID'}}\" } }"
       }
     },
