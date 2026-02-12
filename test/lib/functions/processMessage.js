@@ -494,25 +494,55 @@ lab.experiment('processMessage', () => {
     consoleLogStub.restore()
   })
 
-  lab.test('Meteoalarm failure does not fail message processing', async () => {
-    const consoleErrorStub = sinon.stub(console, 'error')
+  lab.test('Meteoalarm failure triggers error with no SNS notification (no SNS configured)', async () => {
+    const consoleLogStub = sinon.stub(console, 'log')
     meteoalarm.postWarning.rejects(new Error('Meteoalarm API unavailable'))
 
     const putMessageStub = sinon.stub(service, 'putMessage').resolves()
 
-    const response = await processMessage(nwsAlert)
+    const err = await Code.expect(processMessage(nwsAlert)).to.reject()
 
-    // Should still succeed
-    Code.expect(response.statusCode).to.equal(200)
-    Code.expect(response.body.identifier).to.equal(identifier)
+    // Should throw the meteoalarm error
+    Code.expect(err.message).to.equal('Meteoalarm API unavailable')
 
-    // Should have logged the error
-    Code.expect(consoleErrorStub.calledWith('Failed to post to Meteoalarm: Meteoalarm API unavailable')).to.be.true()
+    // Should have logged the bodyXml
+    Code.expect(consoleLogStub.calledWith(nwsAlert.bodyXml)).to.be.true()
 
-    // Should have still called the other services
+    // Should have attempted other services before meteoalarm failed
     Code.expect(putMessageStub.calledOnce).to.be.true()
     Code.expect(redis.set.calledOnce).to.be.true()
 
-    consoleErrorStub.restore()
+    consoleLogStub.restore()
+  })
+
+  lab.test('Meteoalarm failure triggers error with SNS notification', async () => {
+    sinon.stub(aws.email, 'publishMessage').resolves()
+    process.env.CPX_SNS_TOPIC = 'arn:aws:sns:region:account:topic'
+    const consoleLogStub = sinon.stub(console, 'log')
+    meteoalarm.postWarning.rejects(new Error('Meteoalarm API unavailable'))
+
+    const putMessageStub = sinon.stub(service, 'putMessage').resolves()
+
+    const err = await Code.expect(processMessage(nwsAlert)).to.reject()
+
+    // Should throw the error with [500] prefix
+    Code.expect(err.message).to.contain('[500]')
+    Code.expect(err.message).to.contain('Meteoalarm API unavailable')
+
+    // Should have sent SNS notification
+    Code.expect(aws.email.publishMessage.calledOnce).to.be.true()
+    const publishArgs = aws.email.publishMessage.firstCall.args[0]
+    Code.expect(publishArgs.receivedMessage).to.equal(JSON.stringify(nwsAlert.bodyXml))
+    Code.expect(publishArgs.errorMessage).to.equal('Meteoalarm API unavailable')
+    Code.expect(publishArgs.dateCreated).to.exist()
+
+    // Should have logged the bodyXml
+    Code.expect(consoleLogStub.calledWith(nwsAlert.bodyXml)).to.be.true()
+
+    // Should have attempted other services before meteoalarm failed
+    Code.expect(putMessageStub.calledOnce).to.be.true()
+    Code.expect(redis.set.calledOnce).to.be.true()
+
+    consoleLogStub.restore()
   })
 })

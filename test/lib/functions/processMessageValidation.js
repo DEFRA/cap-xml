@@ -17,6 +17,7 @@ const fakeService = {
 const fakeSchema = { validateAsync: async () => ({ error: null }) }
 const fakeAws = { email: { publishMessage: sinon.stub() } }
 const fakeRedis = { set: sinon.stub().resolves('OK') }
+const fakeMeteoalarm = { postWarning: sinon.stub().resolves({ id: 'meteoalarm-warning-id' }) }
 
 const loadWithValidateMock = (validateMock) => {
   return Proxyquire('../../../lib/functions/processMessage', {
@@ -24,7 +25,8 @@ const loadWithValidateMock = (validateMock) => {
     '../helpers/service': fakeService,
     '../schemas/processMessageEventSchema': fakeSchema,
     '../helpers/aws': fakeAws,
-    '../helpers/redis': fakeRedis
+    '../helpers/redis': fakeRedis,
+    '../helpers/meteoalarm': fakeMeteoalarm
   }).processMessage
 }
 
@@ -33,8 +35,12 @@ const CPX_SNS_TOPIC = process.env.CPX_SNS_TOPIC
 lab.experiment('processMessage validation logging', () => {
   lab.afterEach(() => {
     process.env.CPX_SNS_TOPIC = CPX_SNS_TOPIC
+    fakeAws.email.publishMessage.resetHistory()
+    fakeRedis.set.resetHistory()
+    fakeMeteoalarm.postWarning.resetHistory()
   })
   lab.test('Throws error when pre/post validation has errors with no SNS message', async () => {
+    delete process.env.CPX_SNS_TOPIC
     const validateMock = async () => ({ errors: [{ message: 'oops' }] })
     const processMessage = loadWithValidateMock(validateMock)
 
@@ -77,11 +83,13 @@ lab.experiment('processMessage validation logging', () => {
     process.env.CPX_SNS_TOPIC = true
     const awsStub = { email: { publishMessage: sinon.stub() } }
     const redisStub = { set: sinon.stub().resolves('OK') }
+    const meteoalarmStub = { postWarning: sinon.stub().resolves({ id: 'meteoalarm-warning-id' }) }
     const processMessage = Proxyquire('../../../lib/functions/processMessage', {
       '../helpers/service': fakeService,
       '../schemas/processMessageEventSchema': fakeSchema,
       '../helpers/aws': awsStub,
-      '../helpers/redis': redisStub
+      '../helpers/redis': redisStub,
+      '../helpers/meteoalarm': meteoalarmStub
     }).processMessage
 
     const ret = await processMessage(nwsAlert)
