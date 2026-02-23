@@ -19,7 +19,8 @@ cpx_redis_tls=$(echo CPX_REDIS_TLS=$CPX_REDIS_TLS)
 cpx_meteoalarm_api_url=$(echo CPX_METEOALARM_API_URL=$CPX_METEOALARM_API_URL)
 cpx_meteoalarm_api_username=$(echo CPX_METEOALARM_API_USERNAME=$CPX_METEOALARM_API_USERNAME)
 cpx_meteoalarm_api_password=$(echo CPX_METEOALARM_API_PASSWORD=$CPX_METEOALARM_API_PASSWORD)
-set -- $cpx_db_username $cpx_db_password $cpx_db_name $cpx_db_host $cpx_agw_url $cpx_redis_host $cpx_redis_port $cpx_redis_tls $cpx_meteoalarm_api_url $cpx_meteoalarm_api_username $cpx_meteoalarm_api_password
+node_tls_reject_unauthorized=$(echo NODE_TLS_REJECT_UNAUTHORIZED=$NODE_TLS_REJECT_UNAUTHORIZED)
+set -- $cpx_db_username $cpx_db_password $cpx_db_name $cpx_db_host $cpx_agw_url $cpx_redis_host $cpx_redis_port $cpx_redis_tls $cpx_meteoalarm_api_url $cpx_meteoalarm_api_username $cpx_meteoalarm_api_password $node_tls_reject_unauthorized
 custom_environment_variables=$(printf '%s,' "$@" | sed 's/,*$//g')
 
 # Iterate over each file in lambda_functions_dir

@@ -33,7 +33,7 @@ services:
     ports:
       - "8081:8080"
     volumes:
-      - ./docker/wiremock/mappings:/home/wiremock/mappings
+      - ./wiremock/mappings:/home/wiremock/mappings
     command: ["--global-response-templating", "--verbose"]
     networks:
       ls:
