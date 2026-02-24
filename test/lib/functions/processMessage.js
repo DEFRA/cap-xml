@@ -545,4 +545,114 @@ lab.experiment('processMessage', () => {
 
     consoleLogStub.restore()
   })
+
+  // ***********************************************************
+  // CPX_METEOALARM_DISABLE tests
+  // ***********************************************************
+  lab.test('Meteoalarm post is disabled when CPX_METEOALARM_DISABLE is "true"', async () => {
+    process.env.CPX_METEOALARM_DISABLE = 'true'
+
+    let putQuery
+    service.putMessage = (query) => Promise.resolve().then(() => {
+      putQuery = query
+    })
+
+    redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
+
+    const response = await processMessage(nwsAlert)
+
+    Code.expect(response.statusCode).to.equal(200)
+    Code.expect(response.body.identifier).to.equal(identifier)
+
+    // Database and Redis should still be called
+    Code.expect(putQuery).to.exist()
+    Code.expect(redis.set.calledOnce).to.be.true()
+
+    // Meteoalarm should NOT be called
+    Code.expect(meteoalarm.postWarning.called).to.be.false()
+  })
+
+  lab.test('Meteoalarm post is enabled when CPX_METEOALARM_DISABLE is undefined', async () => {
+    delete process.env.CPX_METEOALARM_DISABLE
+
+    let putQuery
+    service.putMessage = (query) => Promise.resolve().then(() => {
+      putQuery = query
+    })
+
+    redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
+
+    const response = await processMessage(nwsAlert)
+
+    Code.expect(response.statusCode).to.equal(200)
+    Code.expect(response.body.identifier).to.equal(identifier)
+
+    // All three services should be called
+    Code.expect(putQuery).to.exist()
+    Code.expect(redis.set.calledOnce).to.be.true()
+    Code.expect(meteoalarm.postWarning.calledOnce).to.be.true()
+  })
+
+  lab.test('Meteoalarm post is enabled when CPX_METEOALARM_DISABLE is "false"', async () => {
+    process.env.CPX_METEOALARM_DISABLE = 'false'
+
+    let putQuery
+    service.putMessage = (query) => Promise.resolve().then(() => {
+      putQuery = query
+    })
+
+    redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
+
+    const response = await processMessage(nwsAlert)
+
+    Code.expect(response.statusCode).to.equal(200)
+    Code.expect(response.body.identifier).to.equal(identifier)
+
+    // All three services should be called
+    Code.expect(putQuery).to.exist()
+    Code.expect(redis.set.calledOnce).to.be.true()
+    Code.expect(meteoalarm.postWarning.calledOnce).to.be.true()
+  })
+
+  lab.test('Meteoalarm post is enabled when CPX_METEOALARM_DISABLE is any other value', async () => {
+    process.env.CPX_METEOALARM_DISABLE = 'something-else'
+
+    let putQuery
+    service.putMessage = (query) => Promise.resolve().then(() => {
+      putQuery = query
+    })
+
+    redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
+
+    const response = await processMessage(nwsAlert)
+
+    Code.expect(response.statusCode).to.equal(200)
+    Code.expect(response.body.identifier).to.equal(identifier)
+
+    // All three services should be called
+    Code.expect(putQuery).to.exist()
+    Code.expect(redis.set.calledOnce).to.be.true()
+    Code.expect(meteoalarm.postWarning.calledOnce).to.be.true()
+  })
+
+  lab.test('Meteoalarm post is disabled even when other operations fail if CPX_METEOALARM_DISABLE is "true"', async () => {
+    process.env.CPX_METEOALARM_DISABLE = 'true'
+
+    // Make database fail to ensure meteoalarm is still not called
+    service.putMessage = (query) => Promise.reject(new Error('database error'))
+
+    redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
+
+    const err = await Code.expect(processMessage(nwsAlert)).to.reject()
+
+    Code.expect(err.message).to.equal('database error')
+
+    // Meteoalarm should still NOT be called even though other operations were attempted
+    Code.expect(meteoalarm.postWarning.called).to.be.false()
+  })
 })
