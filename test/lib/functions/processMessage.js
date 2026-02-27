@@ -467,7 +467,11 @@ lab.experiment('processMessage', () => {
     const consoleLogStub = sinon.stub(console, 'log')
     const badAlert = { bodyXml: nwsAlert.bodyXml.replace('<identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>', '') }
     await Code.expect(processMessage(badAlert)).to.reject()
-    Code.expect(consoleLogStub.calledWith(badAlert.bodyXml)).to.be.true()
+    // Check if bodyXml was logged with the new prefix format
+    const bodyXmlLogCall = consoleLogStub.getCalls().find(call =>
+      call.args[0] === '[processMessage] Failed message body:' && call.args[1] === badAlert.bodyXml
+    )
+    Code.expect(bodyXmlLogCall).to.exist()
     consoleLogStub.restore()
   })
 
@@ -479,7 +483,11 @@ lab.experiment('processMessage', () => {
     const err = await Code.expect(processMessage(badAlert)).to.reject()
     Code.expect(err.message).to.contain('[500]')
     Code.expect(aws.email.publishMessage.calledOnce).to.be.true()
-    Code.expect(consoleLogStub.calledWith(badAlert.bodyXml)).to.be.true()
+    // Check if bodyXml was logged with the new prefix format
+    const bodyXmlLogCall = consoleLogStub.getCalls().find(call =>
+      call.args[0] === '[processMessage] Failed message body:' && call.args[1] === badAlert.bodyXml
+    )
+    Code.expect(bodyXmlLogCall).to.exist()
     consoleLogStub.restore()
   })
 
@@ -489,8 +497,11 @@ lab.experiment('processMessage', () => {
     const response = await processMessage(nwsAlert)
     Code.expect(response.statusCode).to.equal(200)
     // Check that the error logging for validation didn't occur
-    // (processMessage itself logs processing messages, so we check it doesn't log the bodyXml)
-    Code.expect(consoleLogStub.calledWith(nwsAlert.bodyXml)).to.be.false()
+    // (processMessage itself logs processing messages, so we check it doesn't log the bodyXml with error prefix)
+    const bodyXmlErrorLog = consoleLogStub.getCalls().find(call =>
+      call.args[0] === '[processMessage] Failed message body:'
+    )
+    Code.expect(bodyXmlErrorLog).to.not.exist()
     consoleLogStub.restore()
   })
 
@@ -505,8 +516,11 @@ lab.experiment('processMessage', () => {
     // Should throw the meteoalarm error
     Code.expect(err.message).to.equal('Meteoalarm API unavailable')
 
-    // Should have logged the bodyXml
-    Code.expect(consoleLogStub.calledWith(nwsAlert.bodyXml)).to.be.true()
+    // Should have logged the bodyXml with error prefix
+    const bodyXmlLogCall = consoleLogStub.getCalls().find(call =>
+      call.args[0] === '[processMessage] Failed message body:' && call.args[1] === nwsAlert.bodyXml
+    )
+    Code.expect(bodyXmlLogCall).to.exist()
 
     // Should have attempted other services before meteoalarm failed
     Code.expect(putMessageStub.calledOnce).to.be.true()
@@ -536,8 +550,11 @@ lab.experiment('processMessage', () => {
     Code.expect(publishArgs.errorMessage).to.equal('Meteoalarm API unavailable')
     Code.expect(publishArgs.dateCreated).to.exist()
 
-    // Should have logged the bodyXml
-    Code.expect(consoleLogStub.calledWith(nwsAlert.bodyXml)).to.be.true()
+    // Should have logged the bodyXml with error prefix
+    const bodyXmlLogCall = consoleLogStub.getCalls().find(call =>
+      call.args[0] === '[processMessage] Failed message body:' && call.args[1] === nwsAlert.bodyXml
+    )
+    Code.expect(bodyXmlLogCall).to.exist()
 
     // Should have attempted other services before meteoalarm failed
     Code.expect(putMessageStub.calledOnce).to.be.true()

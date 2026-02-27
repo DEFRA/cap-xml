@@ -72,7 +72,7 @@ lab.experiment('processMessage validation logging', () => {
 
     try {
       await processMessage(nwsAlert)
-      Code.expect(logs).to.include('Finished processing CAP message: 4eb3b7350ab7aa443650fc9351f02940E for TESTAREA1')
+      Code.expect(logs.some(l => l.includes('Finished processing CAP message: 4eb3b7350ab7aa443650fc9351f02940E for TESTAREA1'))).to.be.true()
       Code.expect(logs.some(l => l.includes('failed validation'))).to.be.false()
     } finally {
       console.log = origLog
