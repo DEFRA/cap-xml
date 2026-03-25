@@ -16,7 +16,7 @@
   "author": "The Environment Agency",
   "license": "OGL",
   "dependencies": {
-    "@aws-sdk/client-sns": "^3.873.0",
+    "@aws-sdk/client-sns": "^3.1016.0",
     "feed": "5.1.0",
     "joi": "^18.0.1",
     "moment": "^2.30.1",
