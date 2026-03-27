@@ -56,7 +56,7 @@ const expectResponseAndPutQuery = (response, putQuery, status, msgType, referenc
   // test response
   Code.expect(response.statusCode).to.equal(200)
   Code.expect(response.body.identifier).to.equal(identifier)
-  Code.expect(response.body.fwisCode).to.equal('TESTAREA1')
+  Code.expect(response.body.fwisCode).to.equal('TESTWREA1')
   Code.expect(response.body.sent).to.equal('2025-11-06T08:00:27+00:00')
   Code.expect(response.body.expires).to.equal('2025-11-16T08:00:27+00:00')
   Code.expect(response.body.status).to.equal(status)
@@ -71,7 +71,7 @@ const expectResponseAndPutQuery = (response, putQuery, status, msgType, referenc
     Code.expect(putQuery.values[2]).to.be.empty()
   }
   Code.expect(putQuery.values[3]).to.not.be.empty()
-  Code.expect(putQuery.values[4]).to.equal('TESTAREA1')
+  Code.expect(putQuery.values[4]).to.equal('TESTWREA1')
   Code.expect(putQuery.values[5]).to.equal('2025-11-16T08:00:27+00:00')
   Code.expect(putQuery.values[6]).to.equal('2025-11-06T08:00:27+00:00')
   Code.expect(putQuery.values[7]).to.equal('2020-01-01T00:00:00.000Z')
@@ -97,7 +97,7 @@ const expectMessageV1 = (message, severity, status, references, previousReferenc
   Code.expect(message.severity).to.equal(severity)
   Code.expect(message.onset).to.equal('')
   Code.expect(message.headline).to.equal('')
-  Code.expect(message.instruction).not.to.contain('https://check-for-flooding.service.gov.uk/target-area/TESTAREA1')
+  Code.expect(message.instruction).not.to.contain('https://check-for-flooding.service.gov.uk/target-area/TESTWREA1')
   if (quickdialNumber) {
     Code.expect(message.instruction).not.to.contain('- call Floodline on 0345 988 1188, using quickdial code 210010')
     Code.expect(message.instruction).to.contain('- For access to flood warning information offline call Floodline on 0345 988 1188 using quickdial code: 210010.')
@@ -124,7 +124,7 @@ const expectMessageV2 = (message, severity, status, references, previousReferenc
   Code.expect(message.severity).to.equal(mapping.severity)
   Code.expect(message.onset).to.equal(message.sent)
   Code.expect(message.headline).to.equal(`${mapping.headline}: Rivers Lowther and Eamont`)
-  Code.expect(message.instruction).to.contain('https://check-for-flooding.service.gov.uk/target-area/TESTAREA1')
+  Code.expect(message.instruction).to.contain('https://check-for-flooding.service.gov.uk/target-area/TESTWREA1')
   if (quickdialNumber) {
     Code.expect(message.instruction).to.contain('- call Floodline on 0345 988 1188, using quickdial code 210010')
     Code.expect(message.instruction).not.to.contain('- For access to flood warning information offline call Floodline on 0345 988 1188 using quickdial code: 210010.')
@@ -151,7 +151,7 @@ const expectMessageV2 = (message, severity, status, references, previousReferenc
     </parameter>`)
   Code.expect(messageString).to.contain(`<parameter>
       <valueName>uk_ea_ta_code</valueName>
-      <value>TESTAREA1</value>
+      <value>TESTWREA1</value>
     </parameter>`)
 }
 // ***********************************************************
@@ -654,6 +654,51 @@ lab.experiment('processMessage', () => {
     Code.expect(putQuery).to.exist()
     Code.expect(redis.set.calledOnce).to.be.true()
     Code.expect(meteoalarm.postWarning.calledOnce).to.be.true()
+  })
+
+  // ***********************************************************
+  // Warning area vs alert area Meteoalarm routing tests
+  // ***********************************************************
+  lab.test('Warning area (5th char = w) forwards message to Meteoalarm', async () => {
+    const putMessageStub = sinon.stub(service, 'putMessage').resolves()
+
+    redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
+
+    // nwsAlert uses TESTWREA1 - 5th character is 'W', a warning area
+    const response = await processMessage(nwsAlert)
+
+    Code.expect(response.statusCode).to.equal(200)
+    Code.expect(response.body.fwisCode).to.equal('TESTWREA1')
+
+    // DB and Redis should be called
+    Code.expect(putMessageStub.calledOnce).to.be.true()
+    Code.expect(redis.set.calledOnce).to.be.true()
+
+    // Meteoalarm SHOULD be called for warning areas
+    Code.expect(meteoalarm.postWarning.calledOnce).to.be.true()
+  })
+
+  lab.test('Alert area (5th char = a) does not forward message to Meteoalarm', async () => {
+    // Replace the fwisCode with an alert area code: 122WAF946 (charAt(4) = 'A')
+    const alertAreaXml = nwsAlert.bodyXml.replace('<value><![CDATA[TESTWREA1]]></value>', '<value><![CDATA[122WAF946]]></value>')
+
+    const putMessageStub = sinon.stub(service, 'putMessage').resolves()
+
+    redis.set.resetHistory()
+    meteoalarm.postWarning.resetHistory()
+
+    const response = await processMessage({ bodyXml: alertAreaXml })
+
+    Code.expect(response.statusCode).to.equal(200)
+    Code.expect(response.body.fwisCode).to.equal('122WAF946')
+
+    // DB and Redis should still be called
+    Code.expect(putMessageStub.calledOnce).to.be.true()
+    Code.expect(redis.set.calledOnce).to.be.true()
+
+    // Meteoalarm should NOT be called for alert areas
+    Code.expect(meteoalarm.postWarning.called).to.be.false()
   })
 
   lab.test('Meteoalarm post is disabled even when other operations fail if CPX_METEOALARM_DISABLE is "true"', async () => {

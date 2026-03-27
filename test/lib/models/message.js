@@ -121,7 +121,17 @@ lab.experiment('Message class', () => {
   })
 
   lab.test('parses fwisCode (geocode value)', () => {
-    Code.expect(message.fwisCode).to.equal('TESTAREA1')
+    Code.expect(message.fwisCode).to.equal('TESTWREA1')
+  })
+
+  lab.test('isWarning returns true when 5th character of fwisCode is w', () => {
+    Code.expect(message.isWarning).to.be.true()
+  })
+
+  lab.test('isWarning returns false when 5th character of fwisCode is not w (alert area)', () => {
+    const alertAreaXml = xml.replace('<value><![CDATA[TESTWREA1]]></value>', '<value><![CDATA[122WAF946]]></value>')
+    const alertAreaMessage = new Message(alertAreaXml)
+    Code.expect(alertAreaMessage.isWarning).to.be.false()
   })
 
   lab.test('parses msgType', () => {
@@ -230,7 +240,7 @@ lab.experiment('Message class', () => {
     Code.expect(sql.values[1]).to.equal('Alert')
     Code.expect(sql.values[2]).to.be.empty()
     Code.expect(sql.values[3]).to.not.be.empty()
-    Code.expect(sql.values[4]).to.equal('TESTAREA1')
+    Code.expect(sql.values[4]).to.equal('TESTWREA1')
     Code.expect(sql.values[5]).to.equal('2025-11-16T08:00:27+00:00')
     Code.expect(sql.values[6]).to.equal('2025-11-06T08:00:27+00:00')
     Code.expect(sql.values[7]).to.equal('2020-01-01T00:00:00.000Z') // TODO: bug change to not use Zulu shorthand timezone
