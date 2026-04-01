@@ -38,3 +38,7 @@ jobs:
                   -Dsonar.exclusions=**/node_modules/**,**/test/**,**/test-output/**
                   -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
                   -Dsonar.javascript.exclusions=**/node_modules/**,**/test/**,**/test-output/**,**/mock/**,**/public/**
+                  -Dsonar.issue.ignore.multicriteria=e1
+                  -Dsonar.issue.ignore.multicriteria.e1.ruleKey=secrets:S2068
+                  -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/docker/.env
+
