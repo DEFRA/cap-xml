@@ -1,3 +1,6 @@
+# SonarQube cloud analysis exceptions
+# shell:S5332 - Clear text protocols are acceptable for AWS local development.
+# secrets:S2068 - Well known local development secrets are aceptable.
 name: CI
 
 on: [push, pull_request]
@@ -39,11 +42,9 @@ jobs:
                   -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
                   -Dsonar.javascript.exclusions=**/node_modules/**,**/test/**,**/test-output/**,**/mock/**,**/public/**
                   -Dsonar.issue.ignore.multicriteria=e1,e2,e3
-                  # shell:S5332 - Clear text protocols are acceptable for AWS local development.
                   -Dsonar.issue.ignore.multicriteria.e1.ruleKey=shell:S5332
                   -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/docker/scripts/register-lambda-functions.sh
                   -Dsonar.issue.ignore.multicriteria.e2.ruleKey=shell:S5332
                   -Dsonar.issue.ignore.multicriteria.e2.resourceKey=**/docker/scripts/load-dummy-data.sh
-                  # secrets:S2068 - Well known local development secrets are aceptable.
                   -Dsonar.issue.ignore.multicriteria.e3.ruleKey=secrets:S2068
                   -Dsonar.issue.ignore.multicriteria.e3.resourceKey=**/docker/.env
