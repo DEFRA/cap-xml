@@ -204,6 +204,7 @@ put_method_response_for_http_200_status_code() {
       echo "Unable to configure method response for unexpected function $lambda_function_name"
       ;;
   esac
+  return 0
 }
 
 put_responses_for_get_message() {
@@ -223,6 +224,7 @@ put_responses_for_get_message() {
     --response-templates  '{"application/json": "{\"errorMessage\": $input.json(\"$.errorMessage\")}"}'
 
   put_integration_response_for_http_500
+  return 0
 }
 
 put_responses_for_get_messages_atom() {
@@ -254,6 +256,7 @@ put_responses_for_http_200_get() {
     --status-code 200 \
     --response-parameters '{"method.response.header.content-type": "integration.response.body.headers.content-type"}' \
     --response-templates '{"application/xml" : "#set($inputRoot = $input.path(\"$\"))\n$inputRoot.body"}'
+  return 0
 }
 
 put_integration_response_for_http_500() {
@@ -266,6 +269,7 @@ put_integration_response_for_http_500() {
     --response-parameters '{"method.response.header.content-type": "integration.response.body.headers.content-type"}' \
     --response-templates '{"application/json": "{\"errorMessage\": $input.json(\"$.errorMessage\")}"}' \
     --selection-pattern '(\n|.)+'
+  return 0
 }
 
 main "$@"
