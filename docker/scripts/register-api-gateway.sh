@@ -42,20 +42,24 @@ main() {
     --stage-name local
 
   echo "Created API Gateway deployment"
+  return 0
 }
 
 get_http_method() {
-  if [ $1 = "processMessage" ]; then
+  lambda_function_name=$1
+  if [ $lambda_function_name = "processMessage" ]; then
     echo POST
   else
     echo GET
   fi
+  return 0
 }
 
 register_api_gateway_support_for_get_message() {
   get_message_resource_id=$(create_resource $cap_xml_rest_api_root_resource_id  "message")
   message_resource_id=$(create_resource $get_message_resource_id  "{id}")
   put_method_and_integration $message_resource_id
+  return 0
 }
 
 register_api_gateway_support_for_get_message_v2() {
@@ -71,6 +75,7 @@ register_api_gateway_support_for_get_message_v2() {
 register_api_gateway_support_for_get_messages_atom() {
   get_messages_atom_resource_id=$(create_resource $cap_xml_rest_api_root_resource_id  "messages.atom")
   put_method_and_integration $get_messages_atom_resource_id
+  return 0
 }
 
 register_api_gateway_support_for_get_messages_atom_v2() {
@@ -85,13 +90,17 @@ register_api_gateway_support_for_get_messages_atom_v2() {
 register_api_gateway_support_for_process_message() {
   process_message_resource_id=$(create_resource $cap_xml_rest_api_root_resource_id  "message")
   put_method_and_integration $process_message_resource_id
+  return 0
 }
 
 create_resource() {
+  cap_xml_rest_api_root_resource_id=$1
+  cap_xml_rest_api_path_part=$2
   echo $(awslocal apigateway create-resource \
     --rest-api-id $cap_xml_rest_api_id \
-    --parent-id $1 \
-    --path-part $2 | jq -r '.id')
+    --parent-id $cap_xml_rest_api_root_resource_id \
+    --path-part $cap_xml_rest_api_path_part | jq -r '.id')
+  return 0
 }
 
 put_method_and_integration() {
@@ -105,13 +114,14 @@ put_method_and_integration() {
       $(get_request_parameters $lambda_function_name)
 
   put_integration
+  return 0
 }
 
 get_request_parameters() {
   if [ $lambda_function_name = "getMessage" ]; then
     echo --request-parameters "method.request.path.id=true"
   fi
-  return
+  return 0
 }
 
 put_integration() {
@@ -165,10 +175,12 @@ put_integration() {
 
       put_responses_for_process_message
       ;;
-
+    *)
+      echo "Unable to configure integration for unexpected function $lambda_function_name"
+      ;;
   esac
 
-  return
+  return 0
 }
 
 put_method_response_for_http_200_status_code() {
@@ -176,13 +188,13 @@ put_method_response_for_http_200_status_code() {
   # by a function. This results in some duplication.
   case $lambda_function_name in
     getMessage|getMessagesAtom)
-     awslocal apigateway put-method-response \
-       --rest-api-id $cap_xml_rest_api_id \
-       --resource-id $resource_id \
-       --http-method $http_method \
-       --status-code 200 \
-       --response-models '{"application/xml": "Empty"}'
-    ;;
+      awslocal apigateway put-method-response \
+        --rest-api-id $cap_xml_rest_api_id \
+        --resource-id $resource_id \
+        --http-method $http_method \
+        --status-code 200 \
+        --response-models '{"application/xml": "Empty"}'
+      ;;
     processMessage)
       awslocal apigateway put-method-response \
         --rest-api-id $cap_xml_rest_api_id \
@@ -190,8 +202,12 @@ put_method_response_for_http_200_status_code() {
         --http-method $http_method \
         --status-code 200 \
         --response-models '{"application/json": "Empty"}'
-    ;;
+      ;;
+    *)
+      echo "Unable to configure method response for unexpected function $lambda_function_name"
+      ;;
   esac
+  return 0
 }
 
 put_responses_for_get_message() {
@@ -211,11 +227,13 @@ put_responses_for_get_message() {
     --response-templates  '{"application/json": "{\"errorMessage\": $input.json(\"$.errorMessage\")}"}'
 
   put_integration_response_for_http_500
+  return 0
 }
 
 put_responses_for_get_messages_atom() {
   put_responses_for_http_200_get
   put_integration_response_for_http_500
+  return 0
 }
 
 put_responses_for_process_message() {
@@ -227,6 +245,7 @@ put_responses_for_process_message() {
 
   put_method_response_for_http_200_status_code
   put_integration_response_for_http_500
+  return 0
 }
 
 put_responses_for_http_200_get() {
@@ -240,6 +259,7 @@ put_responses_for_http_200_get() {
     --status-code 200 \
     --response-parameters '{"method.response.header.content-type": "integration.response.body.headers.content-type"}' \
     --response-templates '{"application/xml" : "#set($inputRoot = $input.path(\"$\"))\n$inputRoot.body"}'
+  return 0
 }
 
 put_integration_response_for_http_500() {
@@ -252,6 +272,7 @@ put_integration_response_for_http_500() {
     --response-parameters '{"method.response.header.content-type": "integration.response.body.headers.content-type"}' \
     --response-templates '{"application/json": "{\"errorMessage\": $input.json(\"$.errorMessage\")}"}' \
     --selection-pattern '(\n|.)+'
+  return 0
 }
 
 main "$@"
