@@ -35,16 +35,16 @@ lab.experiment('getMessagesAtom validation logging', () => {
     // capture console.log
     const logs = []
     const originalLog = console.log
-    console.log = (msg) => { logs.push(String(msg)) }
+    console.log = (...args) => { logs.push(args.map(a => String(a)).join(' ')) }
 
     try {
       const ret = await getMessagesAtom({})
       Code.expect(ret.statusCode).to.equal(200)
       Code.expect(ret.headers['content-type']).to.equal('application/xml')
-      // Banner
-      Code.expect(logs[0]).to.equal('ATOM feed failed validation')
-      // JSON of the errors
-      Code.expect(logs[1]).to.equal(JSON.stringify([{ message: 'bad', line: 12, column: 4 }]))
+      // Check for validation error logs with new prefix format
+      Code.expect(logs.some(l => l.includes('[getMessagesAtom] ATOM feed failed validation'))).to.equal(true)
+      Code.expect(logs.some(l => l.includes('[getMessagesAtom] Validation errors:'))).to.equal(true)
+      Code.expect(logs.some(l => l.includes(JSON.stringify([{ message: 'bad', line: 12, column: 4 }])))).to.equal(true)
     } finally {
       console.log = originalLog
     }
@@ -61,7 +61,7 @@ lab.experiment('getMessagesAtom validation logging', () => {
     try {
       const ret = await getMessagesAtom({})
       Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(logs.some(l => l.includes('ATOM feed failed validation'))).to.equal(false)
+      Code.expect(logs.some(l => l.includes('failed validation'))).to.equal(false)
     } finally {
       console.log = originalLog
     }

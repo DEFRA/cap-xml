@@ -121,7 +121,17 @@ lab.experiment('Message class', () => {
   })
 
   lab.test('parses fwisCode (geocode value)', () => {
-    Code.expect(message.fwisCode).to.equal('TESTAREA1')
+    Code.expect(message.fwisCode).to.equal('TESTWREA1')
+  })
+
+  lab.test('isWarning returns true when 5th character of fwisCode is w', () => {
+    Code.expect(message.isWarning).to.be.true()
+  })
+
+  lab.test('isWarning returns false when 5th character of fwisCode is not w (alert area)', () => {
+    const alertAreaXml = xml.replace('<value><![CDATA[TESTWREA1]]></value>', '<value><![CDATA[122WAF946]]></value>')
+    const alertAreaMessage = new Message(alertAreaXml)
+    Code.expect(alertAreaMessage.isWarning).to.be.false()
   })
 
   lab.test('parses msgType', () => {
@@ -181,6 +191,30 @@ lab.experiment('Message class', () => {
     Code.expect(message.toString()).to.include('<references>REF2</references>')
   })
 
+  lab.test('responseType defaults to empty string when missing', () => {
+    Code.expect(message.responseType).to.equal('')
+  })
+
+  lab.test('setting responseType adds element when not present', () => {
+    message.responseType = 'Prepare'
+    Code.expect(message.responseType).to.equal('Prepare')
+    Code.expect(message.toString()).to.include('<responseType>Prepare</responseType>')
+  })
+
+  lab.test('setting responseType updates existing element', () => {
+    // First set to add the element
+    message.responseType = 'Monitor'
+    Code.expect(message.responseType).to.equal('Monitor')
+
+    // Second set should update existing element
+    message.responseType = 'Evacuate'
+    Code.expect(message.responseType).to.equal('Evacuate')
+    Code.expect(message.toString()).to.include('<responseType>Evacuate</responseType>')
+    // Should only have one responseType element
+    const responseTypeCount = (message.toString().match(/<responseType>/g) || []).length
+    Code.expect(responseTypeCount).to.equal(1)
+  })
+
   lab.test('parses quickdial number from instruction', () => {
     Code.expect(message.quickdialNumber).to.equal('210010')
   })
@@ -206,7 +240,7 @@ lab.experiment('Message class', () => {
     Code.expect(sql.values[1]).to.equal('Alert')
     Code.expect(sql.values[2]).to.be.empty()
     Code.expect(sql.values[3]).to.not.be.empty()
-    Code.expect(sql.values[4]).to.equal('TESTAREA1')
+    Code.expect(sql.values[4]).to.equal('TESTWREA1')
     Code.expect(sql.values[5]).to.equal('2025-11-16T08:00:27+00:00')
     Code.expect(sql.values[6]).to.equal('2025-11-06T08:00:27+00:00')
     Code.expect(sql.values[7]).to.equal('2020-01-01T00:00:00.000Z') // TODO: bug change to not use Zulu shorthand timezone
@@ -239,6 +273,7 @@ lab.experiment('Message class', () => {
     Code.expect(messageBlank.sent).to.equal('')
     Code.expect(messageBlank.code).to.equal('')
     Code.expect(messageBlank.event).to.equal('')
+    Code.expect(messageBlank.responseType).to.equal('')
     Code.expect(messageBlank.severity).to.equal('')
     Code.expect(messageBlank.onset).to.equal('')
     Code.expect(messageBlank.headline).to.equal('')
@@ -253,6 +288,7 @@ lab.experiment('Message class', () => {
     messageBlank.status = 'Actual'
     messageBlank.code = 'CODE123'
     messageBlank.event = 'Test Event'
+    messageBlank.responseType = 'Shelter'
     messageBlank.severity = 'Severe'
     messageBlank.onset = '2026-06-01T10:00:00-00:00'
     messageBlank.headline = 'Test Headline'
@@ -264,6 +300,7 @@ lab.experiment('Message class', () => {
     Code.expect(messageBlank.status).to.equal('Actual')
     Code.expect(messageBlank.code).to.equal('CODE123')
     Code.expect(messageBlank.event).to.equal('Test Event')
+    Code.expect(messageBlank.responseType).to.equal('Shelter')
     Code.expect(messageBlank.severity).to.equal('Severe')
     Code.expect(messageBlank.onset).to.equal('2026-06-01T10:00:00-00:00')
     Code.expect(messageBlank.headline).to.equal('Test Headline')
@@ -277,6 +314,7 @@ lab.experiment('Message class', () => {
     messageBlank.status = 'Actual'
     messageBlank.code = 'CODE123'
     messageBlank.event = 'Test Event'
+    messageBlank.responseType = 'AllClear'
     messageBlank.severity = 'Severe'
     messageBlank.onset = '2026-06-01T10:00:00-00:00'
     messageBlank.headline = 'Test Headline'
@@ -288,6 +326,7 @@ lab.experiment('Message class', () => {
     Code.expect(messageBlank.status).to.equal('Actual')
     Code.expect(messageBlank.code).to.equal('CODE123')
     Code.expect(messageBlank.event).to.equal('Test Event')
+    Code.expect(messageBlank.responseType).to.equal('AllClear')
     Code.expect(messageBlank.severity).to.equal('Severe')
     Code.expect(messageBlank.onset).to.equal('2026-06-01T10:00:00-00:00')
     Code.expect(messageBlank.headline).to.equal('Test Headline')
@@ -323,5 +362,84 @@ lab.experiment('Message class', () => {
       <valueName>uk_ea_ta_code</valueName>
       <value>fwisCode</value>
     </parameter>`))
+  })
+
+  lab.test('removeNode removes a single node from the document', () => {
+    // Verify instruction exists before removal
+    Code.expect(message.instruction).to.not.be.empty()
+    Code.expect(message.toString()).to.include('<instruction>')
+
+    // Remove instruction node
+    message.removeNode('instruction')
+
+    // Verify instruction is removed
+    Code.expect(message.instruction).to.equal('')
+    Code.expect(message.toString()).to.not.include('<instruction>')
+  })
+
+  lab.test('removeNode removes multiple nodes of the same type', () => {
+    // Add multiple parameters
+    message.addParameter('param1', 'value1')
+    message.addParameter('param2', 'value2')
+    message.addParameter('param3', 'value3')
+
+    // Verify parameters exist
+    const xmlBefore = message.toString()
+    Code.expect(xmlBefore).to.include('<parameter>')
+    Code.expect(xmlBefore).to.include('param1')
+    Code.expect(xmlBefore).to.include('param2')
+    Code.expect(xmlBefore).to.include('param3')
+
+    // Remove all parameter nodes
+    message.removeNode('parameter')
+
+    // Verify all parameters are removed
+    const xmlAfter = message.toString()
+    Code.expect(xmlAfter).to.not.include('<parameter>')
+    Code.expect(xmlAfter).to.not.include('param1')
+    Code.expect(xmlAfter).to.not.include('param2')
+    Code.expect(xmlAfter).to.not.include('param3')
+  })
+
+  lab.test('removeNode handles non-existent nodes gracefully', () => {
+    const xmlBefore = message.toString()
+
+    // Try to remove a node that doesn't exist
+    message.removeNode('nonExistentNode')
+
+    // XML should remain unchanged
+    const xmlAfter = message.toString()
+    Code.expect(xmlAfter).to.equal(xmlBefore)
+  })
+
+  lab.test('removeNode removes code node when present', () => {
+    const messageWithCode = new Message(blankXml2)
+    messageWithCode.code = 'TEST_CODE'
+
+    // Verify code exists
+    Code.expect(messageWithCode.code).to.equal('TEST_CODE')
+    Code.expect(messageWithCode.toString()).to.include('<code>TEST_CODE</code>')
+
+    // Remove code node
+    messageWithCode.removeNode('code')
+
+    // Verify code is removed
+    Code.expect(messageWithCode.code).to.equal('')
+    Code.expect(messageWithCode.toString()).to.not.include('<code>TEST_CODE</code>')
+  })
+
+  lab.test('removeNode removes references node', () => {
+    message.references = 'REF123'
+
+    // Verify references exists
+    Code.expect(message.references).to.equal('REF123')
+    Code.expect(message.toString()).to.include('<references>REF123</references>')
+
+    // Remove references node
+    message.removeNode('references')
+
+    // Verify references is removed
+    Code.expect(message.references).to.equal('')
+    Code.expect(message.toString()).to.not.include('<references>')
   })
 })

@@ -1,0 +1,24 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/warnings"
+      },
+      "response": {
+        "status": 201,
+        "body": "{\"warning\": {\"uuid\": \"{{randomValue type='UUID'}}\" } }"
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPath": "/tokens"
+      },
+      "response": {
+        "status": 200,
+        "body": "{\"tokenType\": \"Bearer\", \"token\": \"{{randomValue length=64 type='ALPHANUMERIC'}}\", \"expiresIn\": \"300\" }"
+      }
+    }
+  ]
+}

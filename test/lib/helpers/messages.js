@@ -123,7 +123,7 @@ lab.experiment('messages helper', () => {
               alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>',
               sent: new Date(),
               identifier: '4eb3b7350ab7aa443650fc9351f',
-              identifier_v2: '2.49.0.0.826.1.YYYYMMDDHHMMSS.4eb3b7350ab7aa443650fc9351f'
+              identifier_v2: '2.49.0.1.826.1.YYYYMMDDHHMMSS.4eb3b7350ab7aa443650fc9351f'
             }]
           })
         })
@@ -189,14 +189,14 @@ lab.experiment('messages helper', () => {
               alert: '<alert>test1</alert>',
               sent: new Date('2025-01-01'),
               identifier: 'id1',
-              identifier_v2: '2.49.0.0.826.1.20250101000000.id1'
+              identifier_v2: '2.49.0.1.826.1.20250101000000.id1'
             },
             {
               fwis_code: 'AREA2',
               alert: '<alert>test2</alert>',
               sent: new Date('2025-01-02'),
               identifier: 'id2',
-              identifier_v2: '2.49.0.0.826.1.20250102000000.id2'
+              identifier_v2: '2.49.0.1.826.1.20250102000000.id2'
             }
           ]
         })
@@ -218,7 +218,7 @@ lab.experiment('messages helper', () => {
             alert: '<alert>test</alert>',
             sent: new Date('2025-01-01T12:00:00Z'),
             identifier: 'test_id',
-            identifier_v2: '2.49.0.0.826.1.20250101120000.test_id'
+            identifier_v2: '2.49.0.1.826.1.20250101120000.test_id'
           }]
         })
       }
@@ -263,7 +263,7 @@ lab.experiment('messages helper', () => {
             alert: `<alert>test${i}</alert>`,
             sent: new Date(`2025-01-0${i + 1}`),
             identifier: `id${i}`,
-            identifier_v2: `2.49.0.0.826.1.2025010${i + 1}000000.id${i}`
+            identifier_v2: `2.49.0.1.826.1.2025010${i + 1}000000.id${i}`
           }))
         })
       }

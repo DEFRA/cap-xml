@@ -20,6 +20,10 @@ This project provides CAP XML services through the use of AWS Lambda.
 | CPX_REDIS_HOST     | Redis/Elasticache host|    yes   |                       |       |
 | CPX_REDIS_PORT     | Redis/Elasticache port|    yes   |                       |       |
 | CPX_REDIS_TLS      | Redis/Elasticache tls |    yes   |                       |       |
+| CPX_METEOALARM_API_URL      | Meteoalarm url |    yes   |                       |       |
+| CPX_METEOALARM_API_USERNAME      | Meteoalarm username |    yes   |                       |       |
+| CPX_METEOALARM_API_PASSWORD      | Meteoalarm password |    yes   |                       |       |
+| CPX_METEOALARM_DISABLE      | Meteoalarm toggle |    no   |                       |       |
 
 ## Prerequisites
 

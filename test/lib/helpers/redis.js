@@ -198,7 +198,7 @@ lab.experiment('redis helper', () => {
     const mockError = new Error('Connection failed')
     errorHandler.args[1](mockError)
 
-    Code.expect(consoleErrorStub.calledWith('Redis connection error:', mockError)).to.be.true()
+    Code.expect(consoleErrorStub.calledWith('[redis] Connection error:', mockError)).to.be.true()
 
     consoleErrorStub.restore()
   })
@@ -212,7 +212,7 @@ lab.experiment('redis helper', () => {
     const connectHandler = mockRedisInstance.on.getCalls().find(call => call.args[0] === 'connect')
     connectHandler.args[1]()
 
-    Code.expect(consoleLogStub.calledWith('Redis connected successfully')).to.be.true()
+    Code.expect(consoleLogStub.calledWith('[redis] Connected successfully')).to.be.true()
 
     consoleLogStub.restore()
   })

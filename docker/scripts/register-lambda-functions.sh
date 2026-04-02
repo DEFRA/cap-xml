@@ -16,7 +16,12 @@ cpx_agw_url=$(echo CPX_AGW_URL=$deployed_cpx_agw_url)
 cpx_redis_host=$(echo CPX_REDIS_HOST=$CPX_REDIS_HOST)
 cpx_redis_port=$(echo CPX_REDIS_PORT=$CPX_REDIS_PORT)
 cpx_redis_tls=$(echo CPX_REDIS_TLS=$CPX_REDIS_TLS)
-set -- $cpx_db_username $cpx_db_password $cpx_db_name $cpx_db_host $cpx_agw_url $cpx_redis_host $cpx_redis_port $cpx_redis_tls
+cpx_meteoalarm_api_url=$(echo CPX_METEOALARM_API_URL=$CPX_METEOALARM_API_URL)
+cpx_meteoalarm_api_username=$(echo CPX_METEOALARM_API_USERNAME=$CPX_METEOALARM_API_USERNAME)
+cpx_meteoalarm_api_password=$(echo CPX_METEOALARM_API_PASSWORD=$CPX_METEOALARM_API_PASSWORD)
+cpx_meteoalarm_disable=$(echo CPX_METEOALARM_DISABLE=$CPX_METEOALARM_DISABLE)
+node_tls_reject_unauthorized=$(echo NODE_TLS_REJECT_UNAUTHORIZED=$NODE_TLS_REJECT_UNAUTHORIZED)
+set -- $cpx_db_username $cpx_db_password $cpx_db_name $cpx_db_host $cpx_agw_url $cpx_redis_host $cpx_redis_port $cpx_redis_tls $cpx_meteoalarm_api_url $cpx_meteoalarm_api_username $cpx_meteoalarm_api_password $node_tls_reject_unauthorized $cpx_meteoalarm_disable
 custom_environment_variables=$(printf '%s,' "$@" | sed 's/,*$//g')
 
 # Iterate over each file in lambda_functions_dir
