@@ -111,6 +111,7 @@ put_method_and_integration() {
       $(get_request_parameters $lambda_function_name)
 
   put_integration
+  return 0
 }
 
 get_request_parameters() {
@@ -227,6 +228,7 @@ put_responses_for_get_message() {
 put_responses_for_get_messages_atom() {
   put_responses_for_http_200_get
   put_integration_response_for_http_500
+  return 0
 }
 
 put_responses_for_process_message() {
@@ -238,6 +240,7 @@ put_responses_for_process_message() {
 
   put_method_response_for_http_200_status_code
   put_integration_response_for_http_500
+  return 0
 }
 
 put_responses_for_http_200_get() {
