@@ -46,7 +46,8 @@ main() {
 }
 
 get_http_method() {
-  if [ $1 = "processMessage" ]; then
+  lambda_function_name=$1
+  if [ $lambda_function_name = "processMessage" ]; then
     echo POST
   else
     echo GET
@@ -93,10 +94,12 @@ register_api_gateway_support_for_process_message() {
 }
 
 create_resource() {
+  cap_xml_rest_api_root_resource_id=$1
+  cap_xml_rest_api_path_part=$2
   echo $(awslocal apigateway create-resource \
     --rest-api-id $cap_xml_rest_api_id \
-    --parent-id $1 \
-    --path-part $2 | jq -r '.id')
+    --parent-id $cap_xml_rest_api_root_resource_id \
+    --path-part $cap_xml_rest_api_path_part | jq -r '.id')
   return 0
 }
 
