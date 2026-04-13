@@ -25,10 +25,12 @@ CPX_METEOALARM_API_PASSWORD=
 CPX_METEOALARM_DISABLE=false
 ```
 
-CCOE webops to run following Jenkins jobs for deployment:
-- _01_UPDATE_DATABASE - (use master branch for cap-xml-db repository)
-- _02_DEPLOY_API_LAMBDA - MODULE_DEPLOY=api_gateways and use branch rc-4.0.0 for cap-xml repository
-- _02_DEPLOY_API_LAMBDA - MODULE_DEPLOY=lambda and use branch rc-4.0.0 for cap-xml repository
+CCOE Deployment steps:
+- Deploy redis
+- Deploy SSM parameters
+- Deploy _01_UPDATE_DATABASE - (use master branch for cap-xml-db repository)
+- Deploy _02_DEPLOY_API_LAMBDA - MODULE_DEPLOY=api_gateways and use branch rc-4.0.0 for cap-xml repository
+- Deploy _02_DEPLOY_API_LAMBDA - MODULE_DEPLOY=lambda and use branch rc-4.0.0 for cap-xml repository
 
 
 Confirm deployment with the flood dev and test team.
