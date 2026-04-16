@@ -1,11 +1,12 @@
-# CAP-XML Release 4.0.0 - Tuesday, 28th April 2026
+# CAP-XML Release 4.0.1 - Tuesday, 28th April 2026
 
 ## Information
+Hotfix update: 4.0.1 - axios v 1.15.0 installation due to critical vulnerability
 
 
 ## Branches
 
-The branches for this release are rc-4.0.0 for cap-xml (https://github.com/DEFRA/cap-xml/tree/rc-4.0.0) and master for cap-xml-db (https://github.com/DEFRA/cap-xml-db)
+The branches for this release are rc-4.0.1 for cap-xml (https://github.com/DEFRA/cap-xml/tree/rc-4.0.1) and master for cap-xml-db (https://github.com/DEFRA/cap-xml-db)
  
 ## Tickets
 
