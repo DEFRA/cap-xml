@@ -19,7 +19,7 @@
   "license": "OGL",
   "dependencies": {
     "@aws-sdk/client-sns": "3.1022.0",
-    "@xmldom/xmldom": "0.9.9",
+    "@xmldom/xmldom": "0.9.10",
     "feed": "5.2.0",
     "axios": "1.15.0",
     "ioredis": "5.10.1",
