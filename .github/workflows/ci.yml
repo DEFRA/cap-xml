@@ -55,4 +55,3 @@ jobs:
               with:
                 fail-on-severity: moderate
                 comment-summary-in-pr: always
-                allow-packages: actions/dependency-review-action
