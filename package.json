@@ -1,6 +1,6 @@
 {
   "name": "cap-xml",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "CAP XML service",
   "engines": {
     "node": "24.x"
