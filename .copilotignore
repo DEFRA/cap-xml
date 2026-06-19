@@ -2,9 +2,6 @@
 # Note: .env exclusions are managed at org level.
 # Core source folders (lib/, test/, config/) are intentionally included.
 
-# Generated lockfile - large, no code-completion value
-package-lock.json
-
 # Test fixture with hardcoded CAP XML body - avoids Copilot suggesting literal XML
 config/cap.json
 
