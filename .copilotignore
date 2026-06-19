@@ -7,3 +7,6 @@ config/cap.json
 
 # Historical release notes - no coding value for indexing
 docs/
+
+# Dependency directory
+node_modules/
