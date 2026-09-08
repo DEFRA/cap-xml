@@ -1,5 +1,5 @@
 {
-	"name": "LocalStack DooD setup",
+	"name": "Floci DooD setup",
 	"dockerComposeFile": [
 		"../docker/networks.yml",
 		"../docker/infrastructure.yml",
@@ -12,14 +12,6 @@
 	"features": {
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
 			"upgradePackages": true
-		},
-		"ghcr.io/localstack/devcontainer-feature/localstack-cli:latest": {
-			"version": "latest",
-			"awslocal": true, // if true, add in features manually: ghcr.io/devcontainers/features/aws-cli
-			"cdklocal": false, // if true, add in features manually: ghcr.io/devcontainers-contrib/features/aws-cdk
-			"pulumilocal": false, // if true, add in features manually: ghcr.io/devcontainers-contrib/features/pulumi
-			"samlocal": false, // if true, add in features manually: ghcr.io/customink/codespaces-features/sam-cli
-			"tflocal": false // if true, add in features manually: ghcr.io/devcontainers-contrib/features/terraform-asdf
 		},
 		"ghcr.io/devcontainers/features/aws-cli:1": {}
 	},

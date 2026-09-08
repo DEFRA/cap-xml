@@ -20,7 +20,7 @@ After a local directory has been selected or a repository URL has been entered i
 * Issue the command **docker ps**
   * Four containers associated with CAP XML should be running on the **Docker host** (due to use of Docker outside of Docker Compose):
     * Development container
-    * LocalStack container
+    * Floci container
     * Postgres container
     * PgAdmin4 container
 

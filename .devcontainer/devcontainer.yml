@@ -15,7 +15,7 @@ services:
     env_file:
       - .env
     dns:
-      # Set the DNS server to be the LocalStack container
+      # Set the DNS server to be the Floci container
       - 192.168.0.20
     networks:
       - ls

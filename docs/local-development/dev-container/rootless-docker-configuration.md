@@ -26,7 +26,7 @@ The repository can be located anywhere on the Linux host accessible to the user 
 
 * Rootful Docker socket backup.
 * Replacement of rootful Docker socket with a symbolic link to the rootless Docker socket.
-  * This is required because the Docker socket used by LocalStack and [Docker outside Of Docker Compose](https://github.com/devcontainers/templates/tree/main/src/docker-outside-of-docker-compose) development containers does not appear to be configurable at the time of writing.
+  * This is required because the Docker socket used by Floci and [Docker outside Of Docker Compose](https://github.com/devcontainers/templates/tree/main/src/docker-outside-of-docker-compose) development containers does not appear to be configurable at the time of writing.
 * Grant of rootless Docker socket read write access to the host SUBGID for the development container **vscode** user.
 
 To facilitate development container creation from the local cap-xml repository, ownership of the local cap-xml repository is **transferred** to the host SUBUID and SUBGID for the development container **vscode** user.

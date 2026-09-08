@@ -11,7 +11,7 @@
     "unit-test": "lab test -v -c -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
     "test": "npm run lint && npm run unit-test",
     "validate-config": "node ./config/index.js",
-    "bootstrap-debug": "docker/scripts/non-dev-container-bootstrap.sh",
+    "bootstrap": "docker/scripts/non-dev-container-bootstrap.sh",
     "load-dummy-data": "docker/scripts/load-dummy-data.sh",
     "teardown": "docker/scripts/teardown.sh"
   },

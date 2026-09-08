@@ -4,11 +4,13 @@
 
 set -e
 
+. docker/scripts/set-local-aws-environment.sh
+
 # Constants
 BASE_GUID="4eb3b7350ab7aa443650fc9351f02940E"
 BASE_AREA="TESTAREA"
 DATA_FILE="test/lib/functions/data/nws-alert.xml"
-LAMBDA_URL=http://$(awslocal apigateway get-rest-apis | jq -r ".items[0].id").execute-api.localhost.localstack.cloud:4566/local/message
+LAMBDA_URL="$AWS_ENDPOINT_URL/restapis/$(aws --endpoint-url "$AWS_ENDPOINT_URL" apigateway get-rest-apis --query "items[?name=='CPX API Gateway'].id | [0]" --output text)/local/_user_request_/message"
 
 # Calculate tomorrow's date
 TOMORROW=$(date -u -d "+1 day" +"%Y-%m-%dT%H:%M:%S+00:00")

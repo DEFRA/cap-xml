@@ -1,10 +1,10 @@
 # Troubleshooting
 
-## LocalStack Container Fails To Start
+## Floci Container Fails To Start
 
-* This could be caused by an existing application using the subnet configured for LocalStack to act as a DNS server (192.168.0.0/24).
+* This could be caused by an existing application using the subnet configured for Floci to act as a DNS server (192.168.0.0/24).
   * The configured subnet avoids conflict with Oracle VirtualBox networking.
-* If the configured subnet conflicts with another application that cannot be stopped, try changing the networking configuration in the [development container Docker Compose file](../.devcontainer/devcontainer.yml) to use a different subnet (such as 10.0.2.0/24 as used in [LocalStack network connectivity documentation](https://blog.localstack.cloud/2024-03-04-making-connecting-to-localstack-easier/)), [teardown](../common/teardown.md) existing development container based resources and create a new development container.
+* If the configured subnet conflicts with another application that cannot be stopped, try changing the networking configuration in the [development container Docker Compose file](../.devcontainer/devcontainer.yml) to use a different subnet (such as 10.0.2.0/24), [teardown](../common/teardown.md) existing development container based resources and create a new development container.
 
 **IMPORTANT** - If cloning the remote repository into a container volume, the configuration change must be pushed to a branch from which the new containerised development environment **must** be created.
 
@@ -15,33 +15,10 @@
     * [Rootless Docker based configuration with development containers](../dev-container/rootless-docker-configuration.md)
     * [Rootless Docker based configuration without development containers](../manual-configuration/rootless-docker-configuration.md)
 
-### Lambda Function Cannot Bind To Standard Node.js Debug Port
+### Lambda Function Step Debugging
 
-* Remove any existing Lambda function container or other process using the port.
-
-### Lambda Function Timeout
-
-* If using Visual Studio Code run the  **Attach to Remote Node.js (cap-xml)** debug configuration **before** Lambda function
-invocation.
-
-### Visual Studio Code Debugger Does Not Attach To Lambda Function Container
-
-#### Dev Container Based Local Development Environment
-
-* Check that the IP address of the Lambda function container matches that configured in the DEBUG_HOST_ADDRESS
-  environment variable within [the Docker environment variable file](../../../docker/.env).
-  * This check could be difficult to perform if Lambda function containers only exist for a short amount of time.
-  * In a standard debugging scenario, a Lambda function container should have the IP address **192.168.0.5** based
-    on these four containers running before the Lambda function container is created:
-    * Dev container
-    * LocalStack container
-    * Postgres container
-    * PgAdmin4 container
-
-#### Non-Dev Container Based Local Development Environment
-
-* Ensure that the DEBUG_HOST_ADDRESS environment variable on the host running the Lambda function container is set to 127.0.0.1
-  **before** launching Visual Studio Code.
+* Step debugging of Lambda functions is **not currently supported under Floci** - see
+  [Running AWS Lambda Functions](./running-and-debugging-lambda-functions.md#step-debugging-is-not-currently-supported).
 
 ### Node.js Module Import Errors
 
@@ -59,4 +36,4 @@ Ensure that the [local cap-xml repository location](../dev-container/local-repos
 
 ### Unsuccessful Resolution Of Problems
 
-If problems persist, prerequisites and associated configuration should be reviewed followed by a [teardown](../common/teardown.md) and rebuild of the containerised development environment. If LocalStack resources for other projects are present (for example [fws-api](https://github.com/DEFRA/fws-api)), try removing these resources before rebuilding to eliminate potential conflicts.
+If problems persist, prerequisites and associated configuration should be reviewed followed by a [teardown](../common/teardown.md) and rebuild of the containerised development environment. If Floci resources for other projects are present (for example [fws-api](https://github.com/DEFRA/fws-api)), try removing these resources before rebuilding to eliminate potential conflicts.

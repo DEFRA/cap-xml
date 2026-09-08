@@ -19,7 +19,7 @@ The location **/opt/workspaces/**  (resulting in a local repository root of  **/
 
 * Rootful Docker socket backup.
 * Replacement of rootful Docker socket with a symbolic link to the rootless Docker socket.
-  * This is required because the Docker socket used by LocalStack does not appear to be configurable at the time of writing.
+  * This is required because the Docker socket used by Floci does not appear to be configurable at the time of writing.
 
 **IMPORTANT** - If [setup-for-rootless-docker-without-dev-container.sh](../../../docker/scripts/setup-for-rootless-docker-without-dev-container.sh) is run using the sudo command, the user session from which the sudo command is run **must** ensure that mandatory environment variables are available to the script. This is because user session environment variables are not available to a sudo command by default. For example, if the environment variables are available to the user session running the sudo command, they can be preserved for availability to [setup-for-rootless-docker-without-dev-container.sh](../../../docker/scripts/setup-for-rootless-docker-without-dev-container.sh) using the following sudo command:
 
