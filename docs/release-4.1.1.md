@@ -21,6 +21,14 @@ Tickets linked to the release in Jira: [https://eaflood.atlassian.net/projects/N
 ## Instructions
 
 CCOE Deployment steps:
-- Deploy _02_DEPLOY_API_LAMBDA - MODULE_DEPLOY=lambda and use branch release/4.1.1 for cap-xml repository
+Deploy _02_DEPLOY_API_LAMBDA:
+
+  Configuration:
+   - CPX_SRC_GITHUB_BRANCH=release/4.1.1
+
+  Build Parameters:
+   - TERRAGRUNT_BRANCH:  master
+   - TERRAFORM_BRANCH:  terraform-main
+   - MODULE_DEPLOY: lambda
 
 Confirm deployment with the flood dev and test team.
