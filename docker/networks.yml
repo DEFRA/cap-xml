@@ -3,8 +3,6 @@ networks:
     ipam:
       config:
         # Specify the subnet range for IP address allocation
-        # This differs from the default subnet in LocalStack networking documentation
-        # (see https://blog.localstack.cloud/2024-03-04-making-connecting-to-localstack-easier/)
-        #  to avoid conflicts with Oracle VirtualBox networking.
+        # This differs from common default emulator subnets to avoid conflicts with Oracle VirtualBox networking.
         # If using a different virtualization platform, the subnet range might need to be adjusted.
         - subnet: 192.168.0.0/24

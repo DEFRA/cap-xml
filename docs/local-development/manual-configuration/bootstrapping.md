@@ -7,15 +7,6 @@
 | LOCAL_CAP_XML_DIR | The **absolute** path to the root of a local cap-xml repository. |
 | DOCKER_SOCK | (Optional) absolute path to docker.sock for rootless installation, defaults to /run/user/1000/docker.sock
 
-### Mandatory Environment Variables For Visual Studio Code Debugging
-
-* If using Visual Studio Code for debugging, the environment variable DEBUG_HOST_ADDRESS **must** be set to 127.0.0.1
-  **before** launching Visual Studio Code. For example, the following command can be used on native Linux:
-
-  ```sh
-  export DEBUG_HOST_ADDRESS=127.0.0.1 && code
-  ```
-
 ## Run Bootstrap Script
 
 * Run the bootstrap-debug npm script from the repository root.
@@ -30,12 +21,12 @@
     * Docker named volume creation.
     * Docker custom network creation.
     * Container creation:
-      * LocalStack.
+      * Floci.
       * Postgres database.
       * Pgadmin4.
       * Liquibase.
         * Changesets are run to create the containerised Postgres database structure.
-    * AWS Lambda function registration with LocalStack.
-    * AWS API Gateway registration with LocalStack.
+    * AWS Lambda function registration with Floci.
+    * AWS API Gateway registration with Floci.
     * Configuration generation providing connectivity to local development environment resources.
     * Liquibase container removal.

@@ -8,15 +8,15 @@ A [development container](https://code.visualstudio.com/docs/remote/containers) 
 * CAP XML database creation and reference data population using a containerised Postgres instance.
 * Use of a [containerised Postgres Graphical User Interface](https://www.pgadmin.org/download/pgadmin-4-container/)
   for performing database operations.
-* [LocalStack](https://www.localstack.cloud/) AWS API Gateway and AWS Lambda
-  provisioning to facilitate local running and debugging of CAP XML calls without round tripping
+* [Floci](https://floci.io/) AWS API Gateway and AWS Lambda
+  provisioning to facilitate local running of CAP XML calls without round tripping
   to AWS infrastructure.
-  * The [LocalStack AWS Command Line interface](https://docs.localstack.cloud/user-guide/integrations/aws-cli/) is
+  * The AWS CLI (configured with the **AWS_ENDPOINT_URL** environment variable pointing at Floci) is
     used during provisioning and can also be used at runtime.
 * Runtime environment variable configuration.
   * Configuration generation providing connectivity to local development environment resources.
 
-Development containers are based on [Docker outside Of Docker Compose](https://github.com/devcontainers/templates/tree/main/src/docker-outside-of-docker-compose) with [LocalStack integration](https://docs.localstack.cloud/user-guide/integrations/devcontainers/#docker-outside-of-docker).
+Development containers are based on [Docker outside Of Docker Compose](https://github.com/devcontainers/templates/tree/main/src/docker-outside-of-docker-compose).
 
 Development containers run as an unprivileged **vscode** user with passwordless sudo access.
 
@@ -33,7 +33,7 @@ If an existing local development environment has been configured manually **it i
 * [Rootless Docker Configuration](./rootless-docker-configuration.md)
   * **Only** applicable when using native Linux or systemd enabled WSL 2 with native Docker.
 * [Dev Container Creation](./dev-container-creation.md)
-* [Running And Debugging Lambda Functions](../common/running-and-debugging-lambda-functions.md)
+* [Running AWS Lambda Functions](../common/running-and-debugging-lambda-functions.md)
 * [Troubleshooting](../common/troubleshooting.md)
 * [Teardown](../common/teardown.md)
 * [Additional Development Container Considerations](./additional-dev-container-considerations.md)

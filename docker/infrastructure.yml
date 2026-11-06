@@ -1,15 +1,14 @@
 services:
-  localstack:
-    container_name: "localstack-main"
-    image: localstack/localstack:4.14.0
+  floci:
+    container_name: "floci-main"
+    image: floci/floci:2.0.1
     ports:
-      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4566:4566"            # Floci AWS Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     env_file:
       - .env
     volumes:
       - "${DOCKER_SOCK:-/run/user/1000/docker.sock}:/var/run/docker.sock"
-      - "./.volume:/var/lib/localstack"
     networks:
       ls:
         # Set the container IP address in the 192.168.0.0/24 subnet

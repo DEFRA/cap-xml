@@ -22,7 +22,7 @@ A development container can be created from either a local repository on the dev
 * A local repository provides easier access to the code outside the container using a bind mount.
 * When using a remote repository URL the code used by the container is located in a Docker volume.
   * While [Microsoft recommend this approach for performance reasons](https://code.visualstudio.com/remote/advancedcontainers/improve-performance), seemingly  
-  incompatible constraints when using this approach with [Docker outside Of Docker Compose](https://github.com/devcontainers/templates/tree/main/src/docker-outside-of-docker-compose), [LocalStack integration](https://docs.localstack.cloud/user-guide/integrations/devcontainers/#docker-outside-of-docker) and either macOS or Windows has led to this option only seeming viable with native Linux at the time of writing.
+  incompatible constraints when using this approach with [Docker outside Of Docker Compose](https://github.com/devcontainers/templates/tree/main/src/docker-outside-of-docker-compose) and either macOS or Windows has led to this option only seeming viable with native Linux at the time of writing.
 
 Regardless of how a development container is created, repository contents are held in a workspace folder within the development container.
 
