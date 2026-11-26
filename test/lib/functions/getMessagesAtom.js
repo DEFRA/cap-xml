@@ -1,44 +1,27 @@
 'use strict'
 
-const Lab = require('@hapi/lab')
-const lab = exports.lab = Lab.script()
-const Code = require('@hapi/code')
-const sinon = require('sinon')
-const Proxyquire = require('proxyquire').noCallThru()
+jest.mock('../../../lib/helpers/messages', () => ({ messages: jest.fn() }))
 
-lab.experiment('getMessagesAtom v1 wrapper', () => {
-  lab.test('Calls messages helper with v2=false', async () => {
-    const messagesStub = sinon.stub().resolves({
-      statusCode: 200,
-      headers: { 'content-type': 'application/xml' },
-      body: '<feed>test</feed>'
-    })
+const messagesHelper = require('../../../lib/helpers/messages')
+const { getMessagesAtom } = require('../../../lib/functions/getMessagesAtom')
 
-    const getMessagesAtom = Proxyquire('../../../lib/functions/getMessagesAtom', {
-      '../helpers/messages': { messages: messagesStub }
-    }).getMessagesAtom
+describe('getMessagesAtom v1 wrapper', () => {
+  it('calls the messages helper with v2=false', async () => {
+    messagesHelper.messages.mockResolvedValue({})
 
     await getMessagesAtom()
 
-    Code.expect(messagesStub.callCount).to.equal(1)
-    Code.expect(messagesStub.calledWith(false)).to.be.true()
+    expect(messagesHelper.messages).toHaveBeenCalledExactlyOnceWith(false)
   })
 
-  lab.test('Returns the result from messages helper', async () => {
+  it('returns the result from the messages helper', async () => {
     const expectedResult = {
       statusCode: 200,
       headers: { 'content-type': 'application/xml' },
       body: '<feed>v1 feed</feed>'
     }
+    messagesHelper.messages.mockResolvedValue(expectedResult)
 
-    const messagesStub = sinon.stub().resolves(expectedResult)
-
-    const getMessagesAtom = Proxyquire('../../../lib/functions/getMessagesAtom', {
-      '../helpers/messages': { messages: messagesStub }
-    }).getMessagesAtom
-
-    const result = await getMessagesAtom()
-
-    Code.expect(result).to.equal(expectedResult)
+    await expect(getMessagesAtom()).resolves.toEqual(expectedResult)
   })
 })

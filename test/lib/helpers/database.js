@@ -1,70 +1,76 @@
 'use strict'
 
-const Lab = require('@hapi/lab')
-const Code = require('@hapi/code')
-const sinon = require('sinon')
-const Proxyquire = require('proxyquire')
-
-const lab = exports.lab = Lab.script()
+jest.mock('pg', () => ({ Pool: jest.fn() }))
 
 const ORIGINAL_ENV = process.env
 
-lab.experiment('database helper', () => {
+describe('database helper', () => {
   let database
+  let Pool
   let mockPoolInstance
-  let mockPg
 
-  lab.beforeEach(() => {
-    // Mock environment
-    process.env = { ...ORIGINAL_ENV }
-    process.env.stage = 'mock-stage'
-    process.env.CPX_REGION = 'mock-region'
-    process.env.CPX_DB_USERNAME = 'mock-db-username'
-    process.env.CPX_DB_PASSWORD = 'mock-db-password'
-    process.env.CPX_DB_NAME = 'mock-db-name'
-    process.env.CPX_DB_HOST = 'mock-db-host'
-    process.env.CPX_AGW_URL = 'http://127.0.0.1'
+  beforeEach(() => {
+    jest.resetModules()
+    process.env = {
+      ...ORIGINAL_ENV,
+      CPX_DB_USERNAME: 'mock-db-username',
+      CPX_DB_PASSWORD: 'mock-db-password',
+      CPX_DB_NAME: 'mock-db-name',
+      CPX_DB_HOST: 'mock-db-host'
+    }
 
-    // Mock pg.Pool
     mockPoolInstance = {
-      query: sinon.stub().resolves({ rows: [] }),
-      end: sinon.stub().resolves(),
+      query: jest.fn().mockResolvedValue({ rows: [] }),
       ending: false
     }
+    Pool = require('pg').Pool
+    Pool.mockImplementation(() => mockPoolInstance)
 
-    mockPg = {
-      Pool: sinon.stub().returns(mockPoolInstance)
-    }
-
-    // Load module with mocked pg
-    database = Proxyquire('../../../lib/helpers/database', {
-      pg: mockPg
-    })
+    database = require('../../../lib/helpers/database')
   })
 
-  lab.afterEach(() => {
-    sinon.restore()
+  afterEach(() => {
+    process.env = ORIGINAL_ENV
   })
 
-  lab.test('init creates a new pool with correct config', () => {
+  it('init creates a new pool with the correct connection string', () => {
     database.init()
-    Code.expect(mockPg.Pool.calledOnce).to.be.true()
-    Code.expect(mockPg.Pool.firstCall.args[0]).to.include({
+
+    expect(Pool).toHaveBeenCalledExactlyOnceWith({
       connectionString: 'postgresql://mock-db-username:mock-db-password@mock-db-host:5432/mock-db-name'
     })
   })
 
-  lab.test('query uses existing pool to run SQL', async () => {
+  it('init reuses an existing pool', () => {
     database.init()
-    await database.query('SELECT 1')
-    Code.expect(mockPoolInstance.query.calledWith('SELECT 1')).to.be.true()
+    database.init()
+
+    expect(Pool).toHaveBeenCalledOnce()
   })
 
-  lab.test('query reinitializes pool if pool is ending', async () => {
+  it('query initialises the pool when required', async () => {
+    await database.query('SELECT 1')
+
+    expect(Pool).toHaveBeenCalledOnce()
+  })
+
+  it('query uses the existing pool to run SQL', async () => {
+    database.init()
+
+    const result = await database.query('SELECT $1', [1])
+
+    expect(result).toEqual({ rows: [] })
+    expect(mockPoolInstance.query).toHaveBeenCalledExactlyOnceWith('SELECT $1', [1])
+    expect(Pool).toHaveBeenCalledOnce()
+  })
+
+  it('query reinitialises the pool if the pool is ending', async () => {
     database.init()
     mockPoolInstance.ending = true
+
     await database.query('SELECT 1')
-    Code.expect(mockPg.Pool.calledTwice).to.be.true()
-    Code.expect(mockPoolInstance.query.calledWith('SELECT 1')).to.be.true()
+
+    expect(Pool).toHaveBeenCalledTimes(2)
+    expect(mockPoolInstance.query).toHaveBeenCalledWith('SELECT 1', undefined)
   })
 })

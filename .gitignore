@@ -11,3 +11,5 @@ docker/.volume
 
 coverage
 .aws-sam
+
+reports/

@@ -16,10 +16,16 @@
             "type": "node",
             "request": "launch",
             "name": "debug unit tests",
-            "program": "${workspaceFolder}/node_modules/.bin/lab",
-             "args": [
-                 "test"
-             ]
+            "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
+            "runtimeArgs": [
+                "--experimental-vm-modules",
+                "--disable-warning=ExperimentalWarning"
+            ],
+            "args": [
+                "--runInBand"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
         }
     ]
 }

@@ -1,24 +1,21 @@
 'use strict'
 
-const Lab = require('@hapi/lab')
-const lab = exports.lab = Lab.script()
-const Code = require('@hapi/code')
 const { messages } = require('../../../lib/helpers/messages')
 const service = require('../../../lib/helpers/service')
 let CPX_AGW_URL
 
-lab.experiment('messages helper', () => {
-  lab.before(() => {
+describe('messages helper', () => {
+  beforeAll(() => {
     CPX_AGW_URL = process.env.CPX_AGW_URL
     process.env.CPX_AGW_URL = 'http://localhost:3000'
   })
 
-  lab.after(() => {
+  afterAll(() => {
     process.env.CPX_AGW_URL = CPX_AGW_URL
   })
 
-  lab.experiment('messages v1 (v2=false)', () => {
-    lab.beforeEach(() => {
+  describe('messages v1 (v2=false)', () => {
+    beforeEach(() => {
       // mock database query
       service.getAllMessages = (query) => {
         return new Promise((resolve, reject) => {
@@ -34,16 +31,16 @@ lab.experiment('messages helper', () => {
       }
     })
 
-    lab.test('Returns v1 atom feed with correct URLs', async () => {
+    it('Returns v1 atom feed with correct URLs', async () => {
       const ret = await messages(false)
-      Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.headers['content-type']).to.equal('application/xml')
-      Code.expect(ret.body).to.contain('<id>http://localhost:3000/messages.atom</id>')
-      Code.expect(ret.body).to.contain('<id>http://localhost:3000/message/4eb3b7350ab7aa443650fc9351f</id>')
-      Code.expect(ret.body).to.not.contain('/v2/')
+      expect(ret.statusCode).toBe(200)
+      expect(ret.headers['content-type']).toBe('application/xml')
+      expect(ret.body).toContain('<id>http://localhost:3000/messages.atom</id>')
+      expect(ret.body).toContain('<id>http://localhost:3000/message/4eb3b7350ab7aa443650fc9351f</id>')
+      expect(ret.body).not.toContain('/v2/')
     })
 
-    lab.test('Handles bad rows returned', async () => {
+    it('Handles bad rows returned', async () => {
       service.getAllMessages = (query) => {
         return new Promise((resolve, reject) => {
           resolve({
@@ -52,40 +49,35 @@ lab.experiment('messages helper', () => {
         })
       }
       const ret = await messages(false)
-      Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.headers['content-type']).to.equal('application/xml')
+      expect(ret.statusCode).toBe(200)
+      expect(ret.headers['content-type']).toBe('application/xml')
     })
 
-    lab.test('Handles no return from database', async () => {
+    it('Handles no return from database', async () => {
       service.getAllMessages = (query) => {
         return new Promise((resolve, reject) => {
           resolve()
         })
       }
       const ret = await messages(false)
-      Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.headers['content-type']).to.equal('application/xml')
+      expect(ret.statusCode).toBe(200)
+      expect(ret.headers['content-type']).toBe('application/xml')
     })
 
-    lab.test('Throws error on database failure', async () => {
-      service.getAllMessages = (query) => {
-        return new Promise((resolve, reject) => {
-          reject(new Error('test error'))
-        })
-      }
-      const err = await Code.expect(messages(false)).to.reject()
-      Code.expect(err.message).to.equal('test error')
+    it('Throws error on database failure', async () => {
+      jest.spyOn(service, 'getAllMessages').mockRejectedValue(new Error('test error'))
+      await expect(messages(false)).rejects.toThrow('test error')
     })
 
-    lab.test('Includes feed metadata', async () => {
+    it('Includes feed metadata', async () => {
       const ret = await messages(false)
-      Code.expect(ret.body).to.contain('<title>Flood warnings for England</title>')
-      Code.expect(ret.body).to.contain('<generator>Environment Agency CAP XML flood warnings</generator>')
-      Code.expect(ret.body).to.contain('<name>Environment Agency</name>')
-      Code.expect(ret.body).to.contain('<email>enquiries@environment-agency.gov.uk</email>')
+      expect(ret.body).toContain('<title>Flood warnings for England</title>')
+      expect(ret.body).toContain('<generator>Environment Agency CAP XML flood warnings</generator>')
+      expect(ret.body).toContain('<name>Environment Agency</name>')
+      expect(ret.body).toContain('<email>enquiries@environment-agency.gov.uk</email>')
     })
 
-    lab.test('Includes entry for each message', async () => {
+    it('Includes entry for each message', async () => {
       service.getAllMessages = () => {
         return Promise.resolve({
           rows: [
@@ -105,15 +97,15 @@ lab.experiment('messages helper', () => {
         })
       }
       const ret = await messages(false)
-      Code.expect(ret.body).to.contain('<title type="html"><![CDATA[AREA1]]></title>')
-      Code.expect(ret.body).to.contain('<title type="html"><![CDATA[AREA2]]></title>')
-      Code.expect(ret.body).to.contain('http://localhost:3000/message/id1')
-      Code.expect(ret.body).to.contain('http://localhost:3000/message/id2')
+      expect(ret.body).toContain('<title type="html"><![CDATA[AREA1]]></title>')
+      expect(ret.body).toContain('<title type="html"><![CDATA[AREA2]]></title>')
+      expect(ret.body).toContain('http://localhost:3000/message/id1')
+      expect(ret.body).toContain('http://localhost:3000/message/id2')
     })
   })
 
-  lab.experiment('messages v2 (v2=true)', () => {
-    lab.beforeEach(() => {
+  describe('messages v2 (v2=true)', () => {
+    beforeEach(() => {
       // mock database query
       service.getAllMessages = (query) => {
         return new Promise((resolve, reject) => {
@@ -130,15 +122,15 @@ lab.experiment('messages helper', () => {
       }
     })
 
-    lab.test('Returns v2 atom feed with correct URLs', async () => {
+    it('Returns v2 atom feed with correct URLs', async () => {
       const ret = await messages(true)
-      Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.headers['content-type']).to.equal('application/xml')
-      Code.expect(ret.body).to.contain('<id>http://localhost:3000/v2/messages.atom</id>')
-      Code.expect(ret.body).to.contain('<id>http://localhost:3000/v2/message/4eb3b7350ab7aa443650fc9351f</id>')
+      expect(ret.statusCode).toBe(200)
+      expect(ret.headers['content-type']).toBe('application/xml')
+      expect(ret.body).toContain('<id>http://localhost:3000/v2/messages.atom</id>')
+      expect(ret.body).toContain('<id>http://localhost:3000/v2/message/4eb3b7350ab7aa443650fc9351f</id>')
     })
 
-    lab.test('Handles bad rows returned', async () => {
+    it('Handles bad rows returned', async () => {
       service.getAllMessages = (query) => {
         return new Promise((resolve, reject) => {
           resolve({
@@ -147,40 +139,39 @@ lab.experiment('messages helper', () => {
         })
       }
       const ret = await messages(true)
-      Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.headers['content-type']).to.equal('application/xml')
+      expect(ret.statusCode).toBe(200)
+      expect(ret.headers['content-type']).toBe('application/xml')
     })
 
-    lab.test('Handles no return from database', async () => {
+    it('Handles no return from database', async () => {
       service.getAllMessages = (query) => {
         return new Promise((resolve, reject) => {
           resolve()
         })
       }
       const ret = await messages(true)
-      Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.headers['content-type']).to.equal('application/xml')
+      expect(ret.statusCode).toBe(200)
+      expect(ret.headers['content-type']).toBe('application/xml')
     })
 
-    lab.test('Throws error on database failure', async () => {
+    it('Throws error on database failure', async () => {
       service.getAllMessages = (query) => {
         return new Promise((resolve, reject) => {
           reject(new Error('test error'))
         })
       }
-      const err = await Code.expect(messages(true)).to.reject()
-      Code.expect(err.message).to.equal('test error')
+      await expect(messages(true)).rejects.toThrow('test error')
     })
 
-    lab.test('Includes feed metadata', async () => {
+    it('Includes feed metadata', async () => {
       const ret = await messages(true)
-      Code.expect(ret.body).to.contain('<title>Flood warnings for England</title>')
-      Code.expect(ret.body).to.contain('<generator>Environment Agency CAP XML flood warnings</generator>')
-      Code.expect(ret.body).to.contain('<name>Environment Agency</name>')
-      Code.expect(ret.body).to.contain('<email>enquiries@environment-agency.gov.uk</email>')
+      expect(ret.body).toContain('<title>Flood warnings for England</title>')
+      expect(ret.body).toContain('<generator>Environment Agency CAP XML flood warnings</generator>')
+      expect(ret.body).toContain('<name>Environment Agency</name>')
+      expect(ret.body).toContain('<email>enquiries@environment-agency.gov.uk</email>')
     })
 
-    lab.test('Includes entry for each message', async () => {
+    it('Includes entry for each message', async () => {
       service.getAllMessages = () => {
         return Promise.resolve({
           rows: [
@@ -202,15 +193,15 @@ lab.experiment('messages helper', () => {
         })
       }
       const ret = await messages(true)
-      Code.expect(ret.body).to.contain('<title type="html"><![CDATA[AREA1]]></title>')
-      Code.expect(ret.body).to.contain('<title type="html"><![CDATA[AREA2]]></title>')
-      Code.expect(ret.body).to.contain('http://localhost:3000/v2/message/id1')
-      Code.expect(ret.body).to.contain('http://localhost:3000/v2/message/id2')
+      expect(ret.body).toContain('<title type="html"><![CDATA[AREA1]]></title>')
+      expect(ret.body).toContain('<title type="html"><![CDATA[AREA2]]></title>')
+      expect(ret.body).toContain('http://localhost:3000/v2/message/id1')
+      expect(ret.body).toContain('http://localhost:3000/v2/message/id2')
     })
   })
 
-  lab.experiment('Edge cases and behavior differences', () => {
-    lab.beforeEach(() => {
+  describe('Edge cases and behavior differences', () => {
+    beforeEach(() => {
       service.getAllMessages = () => {
         return Promise.resolve({
           rows: [{
@@ -224,38 +215,38 @@ lab.experiment('messages helper', () => {
       }
     })
 
-    lab.test('V1 and V2 feeds have different URI prefixes', async () => {
+    it('V1 and V2 feeds have different URI prefixes', async () => {
       const retV1 = await messages(false)
       const retV2 = await messages(true)
 
-      Code.expect(retV1.body).to.contain('http://localhost:3000/messages.atom')
-      Code.expect(retV1.body).to.not.contain('/v2/')
+      expect(retV1.body).toContain('http://localhost:3000/messages.atom')
+      expect(retV1.body).not.toContain('/v2/')
 
-      Code.expect(retV2.body).to.contain('http://localhost:3000/v2/messages.atom')
-      Code.expect(retV2.body).to.contain('/v2/message/')
+      expect(retV2.body).toContain('http://localhost:3000/v2/messages.atom')
+      expect(retV2.body).toContain('/v2/message/')
     })
 
-    lab.test('Both v1 and v2 return same status code and headers', async () => {
+    it('Both v1 and v2 return same status code and headers', async () => {
       const retV1 = await messages(false)
       const retV2 = await messages(true)
 
-      Code.expect(retV1.statusCode).to.equal(retV2.statusCode)
-      Code.expect(retV1.headers).to.equal(retV2.headers)
+      expect(retV1.statusCode).toBe(retV2.statusCode)
+      expect(retV1.headers).toEqual(retV2.headers)
     })
 
-    lab.test('Empty database returns valid empty feed for both versions', async () => {
+    it('Empty database returns valid empty feed for both versions', async () => {
       service.getAllMessages = () => Promise.resolve({ rows: [] })
 
       const retV1 = await messages(false)
       const retV2 = await messages(true)
 
-      Code.expect(retV1.statusCode).to.equal(200)
-      Code.expect(retV2.statusCode).to.equal(200)
-      Code.expect(retV1.body).to.contain('<feed')
-      Code.expect(retV2.body).to.contain('<feed')
+      expect(retV1.statusCode).toBe(200)
+      expect(retV2.statusCode).toBe(200)
+      expect(retV1.body).toContain('<feed')
+      expect(retV2.body).toContain('<feed')
     })
 
-    lab.test('Both versions handle multiple messages correctly', async () => {
+    it('Both versions handle multiple messages correctly', async () => {
       service.getAllMessages = () => {
         return Promise.resolve({
           rows: Array.from({ length: 5 }, (_, i) => ({
@@ -272,8 +263,8 @@ lab.experiment('messages helper', () => {
       const retV2 = await messages(true)
 
       for (let i = 0; i < 5; i++) {
-        Code.expect(retV1.body).to.contain(`<title type="html"><![CDATA[AREA${i}]]></title>`)
-        Code.expect(retV2.body).to.contain(`<title type="html"><![CDATA[AREA${i}]]></title>`)
+        expect(retV1.body).toContain(`<title type="html"><![CDATA[AREA${i}]]></title>`)
+        expect(retV2.body).toContain(`<title type="html"><![CDATA[AREA${i}]]></title>`)
       }
     })
   })

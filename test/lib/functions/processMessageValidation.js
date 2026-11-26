@@ -1,275 +1,243 @@
 'use strict'
 
-const Lab = require('@hapi/lab')
-const lab = exports.lab = Lab.script()
-const Code = require('@hapi/code')
-const Proxyquire = require('proxyquire').noCallThru()
-const sinon = require('sinon')
+jest.mock('xmllint-wasm', () => ({ validateXML: jest.fn() }))
+
 const fs = require('node:fs')
 const path = require('node:path')
+const xmllint = require('xmllint-wasm')
+const { processMessage } = require('../../../lib/functions/processMessage')
+const service = require('../../../lib/helpers/service')
+const aws = require('../../../lib/helpers/aws')
+const redis = require('../../../lib/helpers/redis')
+const meteoalarm = require('../../../lib/helpers/meteoalarm')
+
+const { validateXML: actualValidateXML } = jest.requireActual('xmllint-wasm')
 const nwsAlert = { bodyXml: fs.readFileSync(path.join(__dirname, 'data', 'nws-alert.xml'), 'utf8') }
+const ORIGINAL_ENV = process.env
+const SNS_TOPIC = 'arn:aws:sns:region:account:topic'
 
-const fakeService = {
-  getLastMessage: async () => ({ rows: [] }),
-  putMessage: async () => {}
+// Expected error message builders
+const NS = '{urn:oasis:names:tc:emergency:cap:1.2}'
+const SETS = {
+  msgType: "{'Alert', 'Update', 'Cancel', 'Ack', 'Error'}",
+  scope: "{'Public', 'Restricted', 'Private'}",
+  category: "{'Geo', 'Met', 'Safety', 'Security', 'Rescue', 'Fire', 'Health', 'Env', 'Transport', 'Infra', 'CBRNE', 'Other'}",
+  urgency: "{'Immediate', 'Expected', 'Future', 'Past', 'Unknown'}",
+  severity: "{'Extreme', 'Severe', 'Moderate', 'Minor', 'Unknown'}",
+  certainty: "{'Observed', 'Likely', 'Possible', 'Unlikely', 'Unknown'}"
 }
+const xsdAtomic = (element, value) => `Schemas validity error : Element '${NS}${element}': '${value}' is not a valid value of the local atomic type.`
+const xsdEnum = (element, value) => `Schemas validity error : Element '${NS}${element}': [facet 'enumeration'] The value '${value}' is not an element of the set ${SETS[element]}.`
+const joiEmpty = (field) => `"${field}" is not allowed to be empty`
+const JOI_SENDER = '"alert.sender[0]" must be [www.gov.uk/environment-agency]'
+const JOI_SEVERITY = '"alert.info[0].severity[0]" must be one of [Extreme, Severe, Moderate, Minor]'
 
-const fakeSchema = { validateAsync: async () => ({ error: null }) }
-const fakeAws = { email: { publishMessage: sinon.stub() } }
-const fakeRedis = { set: sinon.stub().resolves('OK') }
-const fakeMeteoalarm = { postWarning: sinon.stub().resolves({ id: 'meteoalarm-warning-id' }) }
+const capXml = (fields) => `<?xml version="1.0" encoding="UTF-8"?>
+      <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+      <identifier>${fields.identifier}</identifier>
+      <sender>${fields.sender}</sender>
+      <sent>${fields.sent}</sent>
+      <status>${fields.value}</status>
+      <msgType>${fields.value}</msgType>
+      <source>${fields.source}</source>
+      <scope>${fields.value}</scope>
+      <info>
+        <language>en-GB</language>
+        <category>${fields.value}</category>
+        <event><![CDATA[064 Issue Flood\r\nAlert EA]]></event>
+        <urgency>${fields.value}</urgency>
+        <severity>${fields.value}</severity>
+        <certainty>${fields.value}</certainty>
+        <expires>${fields.expires}</expires>
+        <senderName>${fields.senderName}</senderName>
+        <area>
+          <areaDesc>${fields.areaDesc}</areaDesc>
+          <polygon>${fields.polygon}</polygon>
+          <geocode>
+            <valueName>TargetAreaCode</valueName>
+            <value><![CDATA[TESTWREA1]]></value>
+          </geocode>
+        </area>
+        </info>
+      </alert>
+    `
 
-const loadWithValidateMock = (validateMock) => {
-  return Proxyquire('../../../lib/functions/processMessage', {
-    'xmllint-wasm': { validateXML: validateMock },
-    '../helpers/service': fakeService,
-    '../schemas/processMessageEventSchema': fakeSchema,
-    '../helpers/aws': fakeAws,
-    '../helpers/redis': fakeRedis,
-    '../helpers/meteoalarm': fakeMeteoalarm
-  }).processMessage
-}
+const getErrorMessages = (err) => JSON.parse(err.message.replace('[500] ', '')).map(e => e.message)
 
-const CPX_SNS_TOPIC = process.env.CPX_SNS_TOPIC
-
-lab.experiment('processMessage validation logging', () => {
-  lab.afterEach(() => {
-    process.env.CPX_SNS_TOPIC = CPX_SNS_TOPIC
-    fakeAws.email.publishMessage.resetHistory()
-    fakeRedis.set.resetHistory()
-    fakeMeteoalarm.postWarning.resetHistory()
-  })
-  lab.test('Throws error when pre/post validation has errors with no SNS message', async () => {
+describe('processMessage validation', () => {
+  beforeEach(() => {
+    process.env = { ...ORIGINAL_ENV }
     delete process.env.CPX_SNS_TOPIC
-    const validateMock = async () => ({ errors: [{ message: 'oops' }] })
-    const processMessage = loadWithValidateMock(validateMock)
-
-    await Code.expect(processMessage(nwsAlert))
-      .to
-      .reject('[{"message":"oops"},{"message":"oops"}]')
-    Code.expect(fakeAws.email.publishMessage.callCount).to.equal(0)
+    delete process.env.CPX_METEOALARM_DISABLE
+    xmllint.validateXML.mockImplementation(actualValidateXML)
+    jest.spyOn(service, 'getLastMessage').mockResolvedValue({ rows: [] })
+    jest.spyOn(service, 'putMessage').mockResolvedValue()
+    jest.spyOn(aws.email, 'publishMessage').mockResolvedValue()
+    jest.spyOn(redis, 'set').mockResolvedValue('OK')
+    jest.spyOn(meteoalarm, 'postWarning').mockResolvedValue({ id: 'meteoalarm-warning-id' })
   })
 
-  lab.test('Throws error when pre/post validation has errors with SNS message sent', async () => {
-    process.env.CPX_SNS_TOPIC = true
-    const validateMock = async () => ({ errors: [{ message: 'oops' }] })
-    const processMessage = loadWithValidateMock(validateMock)
-
-    await Code.expect(processMessage(nwsAlert))
-      .to
-      .reject('[500] [{"message":"oops"},{"message":"oops"}]')
-
-    Code.expect(fakeAws.email.publishMessage.callCount).to.equal(1)
+  afterEach(() => {
+    process.env = ORIGINAL_ENV
   })
 
-  lab.test('does not log when validator has no errors', async () => {
-    const validateMock = async () => ({ errors: [] })
-    const processMessage = loadWithValidateMock(validateMock)
+  describe('with a mocked XSD validator', () => {
+    it('rejects without an SNS message when no topic is configured', async () => {
+      xmllint.validateXML.mockResolvedValue({ errors: [{ message: 'oops' }] })
 
-    const logs = []
-    const origLog = console.log
-    console.log = (msg) => logs.push(String(msg))
+      await expect(processMessage(nwsAlert)).rejects.toHaveProperty('message', '[{"message":"oops"},{"message":"oops"}]')
+      expect(aws.email.publishMessage).not.toHaveBeenCalled()
+    })
 
-    try {
-      await processMessage(nwsAlert)
-      Code.expect(logs.some(l => l.includes('Finished processing CAP message: 4eb3b7350ab7aa443650fc9351f02940E for TESTWREA1'))).to.be.true()
-      Code.expect(logs.some(l => l.includes('failed validation'))).to.be.false()
-    } finally {
-      console.log = origLog
-    }
+    it('rejects with an SNS message when a topic is configured', async () => {
+      process.env.CPX_SNS_TOPIC = SNS_TOPIC
+      xmllint.validateXML.mockResolvedValue({ errors: [{ message: 'oops' }] })
+
+      await expect(processMessage(nwsAlert)).rejects.toHaveProperty('message', '[500] [{"message":"oops"},{"message":"oops"}]')
+      expect(aws.email.publishMessage).toHaveBeenCalledOnce()
+    })
+
+    it.each([
+      ['an empty errors array', { errors: [] }],
+      ['no errors property', {}]
+    ])('processes the message when the validator returns %s', async (_description, result) => {
+      xmllint.validateXML.mockResolvedValue(result)
+
+      await expect(processMessage(nwsAlert)).resolves.toHaveProperty('statusCode', 200)
+      expect(console.log).toHaveBeenCalledWith('[processMessage] Finished processing CAP message: 4eb3b7350ab7aa443650fc9351f02940E for TESTWREA1')
+      expect(console.log).not.toHaveBeenCalledWith('[processMessage] Failed message body:', expect.anything())
+    })
   })
 
-  lab.test('Processes a message correctly if valid with actual xmllint', async () => {
-    process.env.CPX_SNS_TOPIC = true
-    const awsStub = { email: { publishMessage: sinon.stub() } }
-    const redisStub = { set: sinon.stub().resolves('OK') }
-    const meteoalarmStub = { postWarning: sinon.stub().resolves({ id: 'meteoalarm-warning-id' }) }
-    const processMessage = Proxyquire('../../../lib/functions/processMessage', {
-      '../helpers/service': fakeService,
-      '../schemas/processMessageEventSchema': fakeSchema,
-      '../helpers/aws': awsStub,
-      '../helpers/redis': redisStub,
-      '../helpers/meteoalarm': meteoalarmStub
-    }).processMessage
+  describe('with the actual XSD validator', () => {
+    it('leaves the v2 identifier empty when sent is missing', async () => {
+      const bodyXml = nwsAlert.bodyXml.replace('<sent>2025-11-06T08:00:27+00:00</sent>', '<sent></sent>')
 
-    const ret = await processMessage(nwsAlert)
-    Code.expect(ret.statusCode).to.equal(200)
-    Code.expect(ret.body.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(ret.body.fwisCode).to.equal('TESTWREA1')
-    Code.expect(ret.body.sent).to.equal('2025-11-06T08:00:27+00:00')
-    Code.expect(ret.body.expires).to.equal('2025-11-16T08:00:27+00:00')
-    Code.expect(ret.body.status).to.equal('Test')
+      const err = await processMessage({ bodyXml }).catch(e => e)
 
-    Code.expect(awsStub.email.publishMessage.callCount).to.equal(0)
+      // v1 keeps its identifier; only the generated v2 identifier is empty
+      expect(getErrorMessages(err).filter(message => message === joiEmpty('alert.identifier[0]'))).toHaveLength(1)
+      expect(service.putMessage).not.toHaveBeenCalled()
+    })
+    it('processes a valid message', async () => {
+      process.env.CPX_SNS_TOPIC = SNS_TOPIC
 
-    // Verify redis.set was called correctly
-    Code.expect(redisStub.set.calledOnce).to.be.true()
-    const [key, value] = redisStub.set.firstCall.args
-    Code.expect(key).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(value).to.be.an.object()
-    Code.expect(value.identifier).to.equal('4eb3b7350ab7aa443650fc9351f02940E')
-    Code.expect(value.alert).to.not.be.empty()
-    Code.expect(value.alert_v2).to.not.be.empty()
-  })
+      const ret = await processMessage(nwsAlert)
 
-  lab.test('Throws validation errors for empty fields', async () => {
-    process.env.CPX_SNS_TOPIC = true
-    const message = {}
-    message.bodyXml = `<?xml version="1.0" encoding="UTF-8"?>
-      <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
-      <identifier></identifier>
-      <sender></sender>
-      <sent></sent>
-      <status></status>
-      <msgType></msgType>
-      <source></source>
-      <scope></scope>
-      <info>
-        <language>en-GB</language>
-        <category></category>
-        <event><![CDATA[064 Issue Flood\r\nAlert EA]]></event>
-        <urgency></urgency>
-        <severity></severity>
-        <certainty></certainty>
-        <expires></expires>
-        <senderName></senderName>
-        <area>
-          <areaDesc></areaDesc>
-          <polygon></polygon>
-          <geocode>
-            <valueName>TargetAreaCode</valueName>
-            <value><![CDATA[TESTWREA1]]></value>
-          </geocode>
-        </area>
-        </info>
-      </alert>
-    `
-    process.env.CPX_SNS_TOPIC = true
-    const awsStub = { email: { publishMessage: sinon.stub() } }
-    const processMessage = Proxyquire('../../../lib/functions/processMessage', {
-      '../helpers/service': fakeService,
-      '../schemas/processMessageEventSchema': fakeSchema,
-      '../helpers/aws': awsStub
-    }).processMessage
+      expect(ret.statusCode).toBe(200)
+      expect(ret.body).toMatchObject({
+        identifier: '4eb3b7350ab7aa443650fc9351f02940E',
+        fwisCode: 'TESTWREA1',
+        sent: '2025-11-06T08:00:27+00:00',
+        expires: '2025-11-16T08:00:27+00:00',
+        status: 'Test'
+      })
+      expect(aws.email.publishMessage).not.toHaveBeenCalled()
+      expect(redis.set).toHaveBeenCalledExactlyOnceWith('4eb3b7350ab7aa443650fc9351f02940E', expect.objectContaining({
+        identifier: '4eb3b7350ab7aa443650fc9351f02940E',
+        alert: expect.stringContaining('<alert'),
+        alert_v2: expect.stringContaining('<alert')
+      }))
+    })
 
-    const ret = await Code.expect(processMessage(message))
-      .to
-      .reject()
-    const errors = JSON.parse(ret.message.replace('[500] ', ''))
+    it('rejects a message with empty fields', async () => {
+      process.env.CPX_SNS_TOPIC = SNS_TOPIC
+      const bodyXml = capXml({
+        identifier: '',
+        sender: '',
+        sent: '',
+        value: '',
+        source: '',
+        expires: '',
+        senderName: '',
+        areaDesc: '',
+        polygon: ''
+      })
+      const joiErrors = [
+        joiEmpty('alert.identifier[0]'),
+        JOI_SENDER,
+        joiEmpty('alert.sender[0]'),
+        joiEmpty('alert.source[0]'),
+        JOI_SEVERITY,
+        joiEmpty('alert.info[0].severity[0]'),
+        joiEmpty('alert.info[0].senderName[0]'),
+        joiEmpty('alert.info[0].area[0].areaDesc[0]'),
+        joiEmpty('alert.info[0].area[0].polygon[0]')
+      ]
 
-    Code.expect(errors.length).to.equal(35)
-    // Helper to generate message asserts below
-    // errors.forEach((er, i) => {
-    //   console.log(`Code.expect(errors[${i}].message).to.equal('${er.message.replace(/'/g, "\\'")}')`)
-    // })
+      const err = await processMessage({ bodyXml }).catch(e => e)
 
-    Code.expect(errors[0].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sent\': \'\' is not a valid value of the local atomic type.')
-    Code.expect(errors[1].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}msgType\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Alert\', \'Update\', \'Cancel\', \'Ack\', \'Error\'}.')
-    Code.expect(errors[2].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}scope\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Public\', \'Restricted\', \'Private\'}.')
-    Code.expect(errors[3].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}category\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Geo\', \'Met\', \'Safety\', \'Security\', \'Rescue\', \'Fire\', \'Health\', \'Env\', \'Transport\', \'Infra\', \'CBRNE\', \'Other\'}.')
-    Code.expect(errors[4].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}urgency\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Immediate\', \'Expected\', \'Future\', \'Past\', \'Unknown\'}.')
-    Code.expect(errors[5].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}severity\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Extreme\', \'Severe\', \'Moderate\', \'Minor\', \'Unknown\'}.')
-    Code.expect(errors[6].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}certainty\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Observed\', \'Likely\', \'Possible\', \'Unlikely\', \'Unknown\'}.')
-    Code.expect(errors[7].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}expires\': \'\' is not a valid value of the local atomic type.')
-    Code.expect(errors[8].message).to.equal('"alert.identifier[0]" is not allowed to be empty')
-    Code.expect(errors[9].message).to.equal('"alert.sender[0]" must be [www.gov.uk/environment-agency]')
-    Code.expect(errors[10].message).to.equal('"alert.sender[0]" is not allowed to be empty')
-    Code.expect(errors[11].message).to.equal('"alert.source[0]" is not allowed to be empty')
-    Code.expect(errors[12].message).to.equal('"alert.info[0].severity[0]" must be one of [Extreme, Severe, Moderate, Minor]')
-    Code.expect(errors[13].message).to.equal('"alert.info[0].severity[0]" is not allowed to be empty')
-    Code.expect(errors[14].message).to.equal('"alert.info[0].senderName[0]" is not allowed to be empty')
-    Code.expect(errors[15].message).to.equal('"alert.info[0].area[0].areaDesc[0]" is not allowed to be empty')
-    Code.expect(errors[16].message).to.equal('"alert.info[0].area[0].polygon[0]" is not allowed to be empty')
-    // v2 errors
-    Code.expect(errors[17].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sent\': \'\' is not a valid value of the local atomic type.')
-    Code.expect(errors[18].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}msgType\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Alert\', \'Update\', \'Cancel\', \'Ack\', \'Error\'}.')
-    Code.expect(errors[19].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}scope\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Public\', \'Restricted\', \'Private\'}.')
-    Code.expect(errors[20].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}category\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Geo\', \'Met\', \'Safety\', \'Security\', \'Rescue\', \'Fire\', \'Health\', \'Env\', \'Transport\', \'Infra\', \'CBRNE\', \'Other\'}.')
-    Code.expect(errors[21].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}urgency\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Immediate\', \'Expected\', \'Future\', \'Past\', \'Unknown\'}.')
-    Code.expect(errors[22].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}severity\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Extreme\', \'Severe\', \'Moderate\', \'Minor\', \'Unknown\'}.')
-    Code.expect(errors[23].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}certainty\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Observed\', \'Likely\', \'Possible\', \'Unlikely\', \'Unknown\'}.')
-    Code.expect(errors[24].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}onset\': \'\' is not a valid value of the local atomic type.')
-    Code.expect(errors[25].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}expires\': \'\' is not a valid value of the local atomic type.')
-    Code.expect(errors[27].message).to.equal('"alert.sender[0]" must be [www.gov.uk/environment-agency]')
-    Code.expect(errors[28].message).to.equal('"alert.sender[0]" is not allowed to be empty')
-    Code.expect(errors[29].message).to.equal('"alert.source[0]" is not allowed to be empty')
-    Code.expect(errors[30].message).to.equal('"alert.info[0].severity[0]" must be one of [Extreme, Severe, Moderate, Minor]')
-    Code.expect(errors[31].message).to.equal('"alert.info[0].severity[0]" is not allowed to be empty')
-    Code.expect(errors[32].message).to.equal('"alert.info[0].senderName[0]" is not allowed to be empty')
-    Code.expect(errors[33].message).to.equal('"alert.info[0].area[0].areaDesc[0]" is not allowed to be empty')
-    Code.expect(errors[34].message).to.equal('"alert.info[0].area[0].polygon[0]" is not allowed to be empty')
+      expect(err.message).toStartWith('[500] ')
+      expect(getErrorMessages(err)).toEqual([
+        // v1 errors
+        xsdAtomic('sent', ''),
+        xsdEnum('msgType', ''),
+        xsdEnum('scope', ''),
+        xsdEnum('category', ''),
+        xsdEnum('urgency', ''),
+        xsdEnum('severity', ''),
+        xsdEnum('certainty', ''),
+        xsdAtomic('expires', ''),
+        ...joiErrors,
+        // v2 errors
+        xsdAtomic('sent', ''),
+        xsdEnum('msgType', ''),
+        xsdEnum('scope', ''),
+        xsdEnum('category', ''),
+        xsdEnum('urgency', ''),
+        xsdEnum('severity', ''),
+        xsdEnum('certainty', ''),
+        xsdAtomic('onset', ''),
+        xsdAtomic('expires', ''),
+        ...joiErrors
+      ])
+      expect(aws.email.publishMessage).toHaveBeenCalledOnce()
+    })
 
-    Code.expect(awsStub.email.publishMessage.callCount).to.equal(1)
-  })
-  lab.test('Throws validation errors for invalid fields', async () => {
-    process.env.CPX_SNS_TOPIC = true
-    const message = {}
-    message.bodyXml = `<?xml version="1.0" encoding="UTF-8"?>
-      <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
-      <identifier>4eb3b7350ab7aa443650fc9351f02940E</identifier>
-      <sender>invalid</sender>
-      <sent>2026-05-28</sent>
-      <status>invalid</status>
-      <msgType>invalid</msgType>
-      <source>Flood warning service</source>
-      <scope>invalid</scope>
-      <info>
-        <language>en-GB</language>
-        <category>invalid</category>
-        <event><![CDATA[064 Issue Flood\r\nAlert EA]]></event>
-        <urgency>invalid</urgency>
-        <severity>invalid</severity>
-        <certainty>invalid</certainty>
-        <expires>2026-05-29</expires>
-        <senderName>Environment Agency</senderName>
-        <area>
-          <areaDesc>Area description</areaDesc>
-          <polygon>points</polygon>
-          <geocode>
-            <valueName>TargetAreaCode</valueName>
-            <value><![CDATA[TESTWREA1]]></value>
-          </geocode>
-        </area>
-        </info>
-      </alert>
-    `
-    process.env.CPX_SNS_TOPIC = true
-    const awsStub = { email: { publishMessage: sinon.stub() } }
-    const processMessage = Proxyquire('../../../lib/functions/processMessage', {
-      '../helpers/service': fakeService,
-      '../schemas/processMessageEventSchema': fakeSchema,
-      '../helpers/aws': awsStub
-    }).processMessage
+    it('rejects a message with invalid fields', async () => {
+      process.env.CPX_SNS_TOPIC = SNS_TOPIC
+      const bodyXml = capXml({
+        identifier: '4eb3b7350ab7aa443650fc9351f02940E',
+        sender: 'invalid',
+        sent: '2026-05-28',
+        value: 'invalid',
+        source: 'Flood warning service',
+        expires: '2026-05-29',
+        senderName: 'Environment Agency',
+        areaDesc: 'Area description',
+        polygon: 'points'
+      })
 
-    const ret = await Code.expect(processMessage(message))
-      .to
-      .reject()
-    const errors = JSON.parse(ret.message.replace('[500] ', ''))
-    Code.expect(errors.length).to.equal(22)
-    Code.expect(errors[0].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sent\': \'2026-05-28\' is not a valid value of the local atomic type.')
-    Code.expect(errors[1].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}msgType\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Alert\', \'Update\', \'Cancel\', \'Ack\', \'Error\'}.')
-    Code.expect(errors[2].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}scope\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Public\', \'Restricted\', \'Private\'}.')
-    Code.expect(errors[3].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}category\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Geo\', \'Met\', \'Safety\', \'Security\', \'Rescue\', \'Fire\', \'Health\', \'Env\', \'Transport\', \'Infra\', \'CBRNE\', \'Other\'}.')
-    Code.expect(errors[4].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}urgency\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Immediate\', \'Expected\', \'Future\', \'Past\', \'Unknown\'}.')
-    Code.expect(errors[5].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}severity\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Extreme\', \'Severe\', \'Moderate\', \'Minor\', \'Unknown\'}.')
-    Code.expect(errors[6].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}certainty\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Observed\', \'Likely\', \'Possible\', \'Unlikely\', \'Unknown\'}.')
-    Code.expect(errors[7].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}expires\': \'2026-05-29\' is not a valid value of the local atomic type.')
-    Code.expect(errors[8].message).to.equal('"alert.sender[0]" must be [www.gov.uk/environment-agency]')
-    Code.expect(errors[9].message).to.equal('"alert.info[0].severity[0]" must be one of [Extreme, Severe, Moderate, Minor]')
-    // v2 errors
-    Code.expect(errors[10].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}sent\': \'2026-05-28\' is not a valid value of the local atomic type.')
-    Code.expect(errors[11].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}msgType\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Alert\', \'Update\', \'Cancel\', \'Ack\', \'Error\'}.')
-    Code.expect(errors[12].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}scope\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Public\', \'Restricted\', \'Private\'}.')
-    Code.expect(errors[13].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}category\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Geo\', \'Met\', \'Safety\', \'Security\', \'Rescue\', \'Fire\', \'Health\', \'Env\', \'Transport\', \'Infra\', \'CBRNE\', \'Other\'}.')
-    Code.expect(errors[14].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}urgency\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Immediate\', \'Expected\', \'Future\', \'Past\', \'Unknown\'}.')
-    Code.expect(errors[15].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}severity\': [facet \'enumeration\'] The value \'\' is not an element of the set {\'Extreme\', \'Severe\', \'Moderate\', \'Minor\', \'Unknown\'}.')
-    Code.expect(errors[16].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}certainty\': [facet \'enumeration\'] The value \'invalid\' is not an element of the set {\'Observed\', \'Likely\', \'Possible\', \'Unlikely\', \'Unknown\'}.')
-    Code.expect(errors[17].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}onset\': \'2026-05-28\' is not a valid value of the local atomic type.')
-    Code.expect(errors[18].message).to.equal('Schemas validity error : Element \'{urn:oasis:names:tc:emergency:cap:1.2}expires\': \'2026-05-29\' is not a valid value of the local atomic type.')
-    Code.expect(errors[19].message).to.equal('"alert.sender[0]" must be [www.gov.uk/environment-agency]')
-    Code.expect(errors[20].message).to.equal('"alert.info[0].severity[0]" must be one of [Extreme, Severe, Moderate, Minor]')
-    Code.expect(errors[21].message).to.equal('"alert.info[0].severity[0]" is not allowed to be empty')
+      const err = await processMessage({ bodyXml }).catch(e => e)
 
-    Code.expect(awsStub.email.publishMessage.callCount).to.equal(1)
+      expect(err.message).toStartWith('[500] ')
+      expect(getErrorMessages(err)).toEqual([
+        // v1 errors
+        xsdAtomic('sent', '2026-05-28'),
+        xsdEnum('msgType', 'invalid'),
+        xsdEnum('scope', 'invalid'),
+        xsdEnum('category', 'invalid'),
+        xsdEnum('urgency', 'invalid'),
+        xsdEnum('severity', 'invalid'),
+        xsdEnum('certainty', 'invalid'),
+        xsdAtomic('expires', '2026-05-29'),
+        JOI_SENDER,
+        JOI_SEVERITY,
+        // v2 errors
+        xsdAtomic('sent', '2026-05-28'),
+        xsdEnum('msgType', 'invalid'),
+        xsdEnum('scope', 'invalid'),
+        xsdEnum('category', 'invalid'),
+        xsdEnum('urgency', 'invalid'),
+        xsdEnum('severity', ''),
+        xsdEnum('certainty', 'invalid'),
+        xsdAtomic('onset', '2026-05-28'),
+        xsdAtomic('expires', '2026-05-29'),
+        JOI_SENDER,
+        JOI_SEVERITY,
+        joiEmpty('alert.info[0].severity[0]')
+      ])
+      expect(aws.email.publishMessage).toHaveBeenCalledOnce()
+    })
   })
 })
