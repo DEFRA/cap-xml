@@ -8,7 +8,7 @@
   "main": "handler.js",
   "scripts": {
     "lint": "eslint .",
-    "unit-test": "lab test -v -c -r console -o stdout -r lcov -o coverage/lcov.info -m 5000",
+    "unit-test": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --coverage",
     "test": "npm run lint && npm run unit-test",
     "validate-config": "node ./config/index.js",
     "bootstrap-debug": "docker/scripts/non-dev-container-bootstrap.sh",
@@ -32,12 +32,16 @@
     "xmllint-wasm": "5.3.0"
   },
   "devDependencies": {
-    "@hapi/code": "9.0.3",
-    "@hapi/lab": "26.0.1",
-    "aws-sdk-client-mock": "4.1.0",
     "eslint": "10.12.0",
-    "neostandard": "0.14.1",
-    "proxyquire": "2.1.3",
-    "sinon": "22.1.0"
+    "globals": "17.14.0",
+    "jest": "30.5.2",
+    "jest-extended": "7.0.0",
+    "neostandard": "0.14.1"
+  },
+  "overrides": {
+    "jest": {
+      "glob": "14.0.6",
+      "minimatch": "11.0.9"
+    }
   }
 }

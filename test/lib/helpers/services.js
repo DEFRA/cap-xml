@@ -1,84 +1,53 @@
 'use strict'
 
-const Lab = require('@hapi/lab')
-const Code = require('@hapi/code')
-const sinon = require('sinon')
+const db = require('../../../lib/helpers/database')
+const service = require('../../../lib/helpers/service')
 
-const lab = exports.lab = Lab.script()
+describe('service helper', () => {
+  let querySpy
 
-lab.experiment('Service Helper', () => {
-  let db
-  let dbStub
-  let queries
-  let service
-
-  lab.before(() => {
-    delete require.cache[require.resolve('../../../lib/helpers/service.js')]
-    db = require('../../../lib/helpers/database')
-    queries = require('../../../lib/helpers/queries')
-    service = require('../../../lib/helpers/service')
+  beforeEach(() => {
+    querySpy = jest.spyOn(db, 'query')
   })
 
-  lab.beforeEach(() => {
-    dbStub = sinon.stub(db, 'query')
-  })
-
-  lab.afterEach(() => {
-    sinon.restore()
-  })
-
-  lab.after(() => {
-    delete require.cache[require.resolve('../../../lib/helpers/service.js')]
-  })
-
-  lab.test('getMessage should call db.query with correct query and id', async () => {
+  it('getMessage calls db.query with the correct query and id', async () => {
     const fakeResult = { rows: [{ id: 1, fwis_code: 'mock-fwis-code' }] }
-    dbStub.returns(fakeResult)
+    querySpy.mockResolvedValue(fakeResult)
 
-    const result = await service.getMessage(1)
-
-    Code.expect(dbStub.calledWith(queries.getMessage, [1])).to.be.true()
-    Code.expect(result).to.equal(fakeResult)
+    await expect(service.getMessage(1)).resolves.toEqual(fakeResult)
+    expect(querySpy).toHaveBeenCalledExactlyOnceWith('select cx.getMessage($1);', [1])
   })
 
-  lab.test('getLastMessage should call db.query with correct query and id', async () => {
+  it('getLastMessage calls db.query with the correct query and id', async () => {
     const fakeResult = { rows: [{ id: 2, fwis_code: 'mock-fwis-code' }] }
-    dbStub.resolves(fakeResult)
+    querySpy.mockResolvedValue(fakeResult)
 
-    const result = await service.getLastMessage(2)
-
-    Code.expect(dbStub.calledWith(queries.getLastMessage, [2])).to.be.true()
-    Code.expect(result).to.equal(fakeResult)
+    await expect(service.getLastMessage(2)).resolves.toEqual(fakeResult)
+    expect(querySpy).toHaveBeenCalledExactlyOnceWith('select * from cx.messages where fwis_code = $1 order by created desc limit 1;', [2])
   })
 
-  lab.test('getAllMessages should call db.query with correct query', async () => {
+  it('getAllMessages calls db.query with the correct query', async () => {
     const fakeResult = { rows: [] }
-    dbStub.resolves(fakeResult)
+    querySpy.mockResolvedValue(fakeResult)
 
-    const result = await service.getAllMessages()
-
-    Code.expect(dbStub.calledWith(queries.getAllMessages)).to.be.true()
-    Code.expect(result).to.equal(fakeResult)
+    await expect(service.getAllMessages()).resolves.toEqual(fakeResult)
+    expect(querySpy).toHaveBeenCalledExactlyOnceWith('select * from cx.getAllMessages();')
   })
 
-  lab.test('putMessage should call db.query with provided query', async () => {
+  it('putMessage calls db.query with the provided query', async () => {
     const customQuery = 'INSERT INTO messages (fwis_code) VALUES (\'mock-fwis-code\')'
     const fakeResult = { rowCount: 1 }
-    dbStub.resolves(fakeResult)
+    querySpy.mockResolvedValue(fakeResult)
 
-    const result = await service.putMessage(customQuery)
-
-    Code.expect(dbStub.calledWith(customQuery)).to.be.true()
-    Code.expect(result).to.equal(fakeResult)
+    await expect(service.putMessage(customQuery)).resolves.toEqual(fakeResult)
+    expect(querySpy).toHaveBeenCalledExactlyOnceWith(customQuery)
   })
 
-  lab.test('archiveMessages should call db.query with correct query', async () => {
+  it('archiveMessages calls db.query with the correct query', async () => {
     const fakeResult = { rowCount: 5 }
-    dbStub.resolves(fakeResult)
+    querySpy.mockResolvedValue(fakeResult)
 
-    const result = await service.archiveMessages()
-
-    Code.expect(dbStub.calledWith(queries.archiveMessages)).to.be.true()
-    Code.expect(result).to.equal(fakeResult)
+    await expect(service.archiveMessages()).resolves.toEqual(fakeResult)
+    expect(querySpy).toHaveBeenCalledExactlyOnceWith('select cx.archiveMessages();')
   })
 })

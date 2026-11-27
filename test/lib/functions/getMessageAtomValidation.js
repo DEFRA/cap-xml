@@ -1,22 +1,17 @@
 'use strict'
 
-const Lab = require('@hapi/lab')
-const lab = exports.lab = Lab.script()
-const Code = require('@hapi/code')
+jest.mock('xmllint-wasm', () => ({ validateXML: jest.fn() }))
+
+const { validateXML } = require('xmllint-wasm')
+const { messages } = require('../../../lib/helpers/messages')
 const service = require('../../../lib/helpers/service')
-const Proxyquire = require('proxyquire').noCallThru()
 
-// Mock the service.getAllMessages function for validation experiment and tests
-const loadHandlerWithValidateMock = (validateMock) => {
-  return Proxyquire('../../../lib/helpers/messages', {
-    'xmllint-wasm': { validateXML: validateMock }
-  }).messages
-}
+const ORIGINAL_ENV = process.env
 
-lab.experiment('getMessagesAtom validation logging', () => {
-  lab.beforeEach(() => {
-    // mock DB
-    service.getAllMessages = async () => ({
+describe('getMessagesAtom validation logging', () => {
+  beforeEach(() => {
+    process.env = { ...ORIGINAL_ENV, CPX_AGW_URL: 'http://localhost:3000' }
+    jest.spyOn(service, 'getAllMessages').mockResolvedValue({
       rows: [{
         fwis_code: 'test_fwis_code',
         alert: '<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">test</alert>',
@@ -26,44 +21,31 @@ lab.experiment('getMessagesAtom validation logging', () => {
     })
   })
 
-  lab.test('logs when validator reports errors and still returns 200', async () => {
-    const validateMock = async () => ({
-      errors: [{ message: 'bad', line: 12, column: 4 }]
-    })
-    const getMessagesAtom = loadHandlerWithValidateMock(validateMock)
-
-    // capture console.log
-    const logs = []
-    const originalLog = console.log
-    console.log = (...args) => { logs.push(args.map(a => String(a)).join(' ')) }
-
-    try {
-      const ret = await getMessagesAtom({})
-      Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(ret.headers['content-type']).to.equal('application/xml')
-      // Check for validation error logs with new prefix format
-      Code.expect(logs.some(l => l.includes('[getMessagesAtom] ATOM feed failed validation'))).to.equal(true)
-      Code.expect(logs.some(l => l.includes('[getMessagesAtom] Validation errors:'))).to.equal(true)
-      Code.expect(logs.some(l => l.includes(JSON.stringify([{ message: 'bad', line: 12, column: 4 }])))).to.equal(true)
-    } finally {
-      console.log = originalLog
-    }
+  afterEach(() => {
+    process.env = ORIGINAL_ENV
   })
 
-  lab.test('does not log when validator returns no errors', async () => {
-    const validateMock = async () => ({ errors: [] })
-    const getMessagesAtom = loadHandlerWithValidateMock(validateMock)
+  it('logs when the validator reports errors and still returns 200', async () => {
+    const errors = [{ message: 'bad', line: 12, column: 4 }]
+    validateXML.mockResolvedValue({ errors })
 
-    const logs = []
-    const originalLog = console.log
-    console.log = (msg) => { logs.push(String(msg)) }
+    const ret = await messages()
 
-    try {
-      const ret = await getMessagesAtom({})
-      Code.expect(ret.statusCode).to.equal(200)
-      Code.expect(logs.some(l => l.includes('failed validation'))).to.equal(false)
-    } finally {
-      console.log = originalLog
-    }
+    expect(ret.statusCode).toBe(200)
+    expect(ret.headers['content-type']).toBe('application/xml')
+    expect(console.log).toHaveBeenCalledWith('[getMessagesAtom] ATOM feed failed validation')
+    expect(console.log).toHaveBeenCalledWith('[getMessagesAtom] Validation errors:', JSON.stringify(errors))
+  })
+
+  it.each([
+    ['an empty errors array', { errors: [] }],
+    ['no errors property', {}]
+  ])('does not log when the validator returns %s', async (_description, result) => {
+    validateXML.mockResolvedValue(result)
+
+    const ret = await messages()
+
+    expect(ret.statusCode).toBe(200)
+    expect(console.log).not.toHaveBeenCalledWith('[getMessagesAtom] ATOM feed failed validation')
   })
 })

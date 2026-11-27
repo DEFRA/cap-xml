@@ -1,46 +1,29 @@
 'use strict'
 
-const Lab = require('@hapi/lab')
-const lab = exports.lab = Lab.script()
-const Code = require('@hapi/code')
-const sinon = require('sinon')
-const Proxyquire = require('proxyquire').noCallThru()
+jest.mock('../../../../lib/helpers/message', () => ({ getMessage: jest.fn() }))
 
-lab.experiment('getMessage v2 wrapper', () => {
-  lab.test('Calls getMessage helper with v2=true', async () => {
-    const getMessageStub = sinon.stub().resolves({
-      statusCode: 200,
-      headers: { 'content-type': 'application/xml' },
-      body: '<alert>test</alert>'
-    })
+const messageHelper = require('../../../../lib/helpers/message')
+const { getMessage } = require('../../../../lib/functions/v2/getMessage')
 
-    const getMessage = Proxyquire('../../../../lib/functions/v2/getMessage', {
-      '../../helpers/message': { getMessage: getMessageStub }
-    }).getMessage
+describe('getMessage v2 wrapper', () => {
+  const event = { pathParameters: { id: 'test123' } }
 
-    const event = { pathParameters: { id: 'test123' } }
+  it('calls the getMessage helper with v2=true', async () => {
+    messageHelper.getMessage.mockResolvedValue({})
+
     await getMessage(event)
 
-    Code.expect(getMessageStub.callCount).to.equal(1)
-    Code.expect(getMessageStub.calledWith(event, true)).to.be.true()
+    expect(messageHelper.getMessage).toHaveBeenCalledExactlyOnceWith(event, true)
   })
 
-  lab.test('Returns the result from getMessage helper', async () => {
+  it('returns the result from the getMessage helper', async () => {
     const expectedResult = {
       statusCode: 200,
       headers: { 'content-type': 'application/xml' },
       body: '<alert>v2 alert</alert>'
     }
+    messageHelper.getMessage.mockResolvedValue(expectedResult)
 
-    const getMessageStub = sinon.stub().resolves(expectedResult)
-
-    const getMessage = Proxyquire('../../../../lib/functions/v2/getMessage', {
-      '../../helpers/message': { getMessage: getMessageStub }
-    }).getMessage
-
-    const event = { pathParameters: { id: 'test123' } }
-    const result = await getMessage(event)
-
-    Code.expect(result).to.equal(expectedResult)
+    await expect(getMessage(event)).resolves.toEqual(expectedResult)
   })
 })
